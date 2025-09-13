@@ -7,9 +7,11 @@
 
 ## Project Statistics
 
-- **Total Files**: 179 (including MarkdownUI library)
-- **Active Components**: 47 directories
-- **Lines of Code**: ~5,000+ (excluding MarkdownUI)
+- **Total Files**: 163 (including MarkdownUI library)
+- **Core Application**: ~66 files (excluding MarkdownUI)
+- **MarkdownUI Library**: 97 files (ready for integration)
+- **Active Components**: 46 directories
+- **Lines of Code**: ~3,500 (excluding MarkdownUI)
 - **Design Pattern**: Behavior-contract throughout
 - **Data Layer**: JSON (active) + SwiftData (scaffolded)
 
@@ -19,13 +21,15 @@
 |-----------|--------|------------|--------------|
 | **Behavior-Contract** | ✅ | Yes | Complete pattern implementation |
 | **Toolbar System** | ✅ | Yes | All toolbars use config pattern |
-| **Mapper** | 🔄 | 80% | Nodes work, connections 70% |
-| **Writer** | 🔄 | Basic | TextEditor only, MarkdownUI ready |
-| **File Browser** | ✅ | Yes | Single implementation active |
+| **Writer** | 🔄 | 40% | TextEditor working, MarkdownUI ready |
+| **WriterDocument** | ✅ | Yes | Document model with auto-save |
+| **WriterState** | ✅ | Yes | View state management |
+| **File Browser** | 🔄 | 50% | Browse works, can't open files |
 | **Project Manager** | ✅ | Yes | JSON save/load working |
 | **Inspector** | ✅ | Yes | File browser integrated |
 | **Index Cards** | 🎨 | UI Only | Static grid, no persistence |
 | **Character Sheet** | 🎨 | UI Only | Complete form, no data |
+| **Timeline** | ❌ | No | Empty directory |
 | **MarkdownUI** | ⏳ | Ready | 97 files ready to integrate |
 
 ### Legend
@@ -33,6 +37,7 @@
 - 🔄 Partially implemented (functional)
 - 🎨 UI complete (no backend)
 - ⏳ Ready but not integrated
+- ❌ Not implemented
 
 ## Core Architecture Implementation
 
@@ -41,13 +46,12 @@
 **Fully Implemented Across:**
 ```swift
 // Toolbars
-MapperToolbar + MapperToolbarConfig
 ProjectToolbar + ProjectToolbarConfig  
 WriterToolbar + WriterToolbarConfig
 
 // Pattern: Views own no state
-struct AnyToolbar: View {
-    let config: ToolbarConfig  // Only closures
+struct WriterToolbar: View {
+    let config: WriterToolbarConfig  // Only behaviors
 }
 ```
 
@@ -77,13 +81,14 @@ struct AnyToolbar: View {
 
 #### Toolbar System
 ```
-Files: 6 config/toolbar pairs
+Files: 4 config/toolbar pairs
 Status: Production ready
 Pattern: Perfect behavior-contract
 Features:
-  - Zoom controls (Mapper)
   - Section navigation (Project)
-  - Font controls (Writer)
+  - Font size controls (Writer)
+  - Line numbers toggle
+  - Word/line counters
   - Platform adaptive styling
 ```
 
@@ -98,57 +103,53 @@ Features:
   - UserDefaults for recents
 ```
 
-#### File Browser
+#### Writer State Management
 ```
-FileBrowser.swift (Active)
+WriterState.swift + WriterDocument.swift
 Status: Complete
 Features:
-  - Tree view with expansion
-  - Create folders/markdown files
-  - Delete items
-  - Color-coded folders
-  - Hover states (macOS)
-Note: FileSystem.swift appears unused
+  - Font size management (11-24pt)
+  - Line numbers toggle
+  - Word/line/character counting
+  - Document dirty state
+  - Auto-save timer (2 seconds)
+  - Weak document reference pattern
 ```
 
 ### 🔄 Partially Complete
 
-#### Mapper System (80% Complete)
-```
-Working:
-  - 19 node types with categories
-  - Node placement with confirm/cancel
-  - Drag & drop positioning
-  - Pan/zoom canvas
-  - Grid & snap-to-grid
-  - Node states (normal/placement/editing)
-  - Action overlays
-  - Platform-specific hover
-
-In Progress:
-  - Connection system (70%)
-  - Edge validation
-  - Multi-select
-  
-Not Started:
-  - Persistence to project
-  - Undo/redo
-  - Copy/paste
-```
-
-#### Writer Module (Basic)
+#### Writer Module (40% Complete)
 ```
 Working:
   - TextEditor with font control
-  - Word count
-  - Clear text
+  - WriterDocument model
+  - WriterState management
+  - Word/line counting
+  - Font size increment/decrement
+  - Line numbers display
   - Behavior-contract toolbar
+  - Auto-save foundation
 
-Missing:
-  - WriterDocument.swift (doesn't exist)
-  - Markdown rendering (MarkdownUI not connected)
+Not Integrated:
+  - MarkdownUI rendering (ready but disconnected)
   - Syntax highlighting
-  - Auto-save
+  - Live markdown preview
+```
+
+#### File Browser (50% Complete)
+```
+Working:
+  - Tree view with expansion
+  - Browse project structure
+  - Visual hierarchy
+  
+Issues:
+  - Can't open files in writer
+  - Three redundant implementations:
+    * FileBrowser.swift (active)
+    * FileSystem.swift (unclear)
+    * FileSystemModel.swift (unclear)
+  - No save UI trigger
 ```
 
 ### 🎨 UI Complete (No Backend)
@@ -161,17 +162,20 @@ Missing:
   - Data model
   - CRUD operations
   - Project integration
+  - Persistence
 ```
 
 #### Character Sheet
 ```
 CharacterSheet.swift
-UI: Full form with tabs
+UI: Full form with sections
+  - Basic info
   - Physical description
-  - Development points
+  - Character development
   - Notes
 Missing:
-  - Data persistence
+  - Data model
+  - Persistence
   - Project integration
 ```
 
@@ -185,9 +189,29 @@ Complete implementation:
   - Parser system
   - Renderer with themes
   - Block & inline styles
+  - Table support
+  - Code blocks
+  - Lists (bullet, numbered, task)
   
 Status: Not connected to Writer
-Plan: Integration after Mapper complete
+Plan: Replace TextEditor in MarkdownWriter.swift
+Strategic: Consider XCFramework for reuse in SyntaxWriter/LocalLLM
+```
+
+### ❌ Not Implemented
+
+#### Timeline View
+```
+Views/Timeline/
+Status: Empty directory
+Plan: Future feature
+```
+
+#### Outline Panel
+```
+Inspector/OutlinerView.swift
+Status: Placeholder
+Plan: Document structure view
 ```
 
 ## State Management
@@ -195,18 +219,17 @@ Plan: Integration after Mapper complete
 ### Active Stores
 
 ```swift
-@MainActor final class MapperState     ✅ Zoom/pan/grid
-@MainActor final class NodeStore        ✅ Node management  
-@MainActor final class EdgeStore        ✅ Edge management
+@MainActor final class WriterState      ✅ View state (font, lines)
+@MainActor final class WriterDocument   ✅ Document model
 @MainActor final class ProjectManager   ✅ Project state
 @MainActor final class StoryFileManager ✅ File browser
 ```
 
-### Placeholder References
+### SwiftData (Scaffolded)
 
 ```swift
-WriterDocument    ❌ Referenced but doesn't exist
-Item (SwiftData)  ⏳ Scaffolded but unused
+Item (SwiftData)  ⏳ Ready but unused
+Plan: Future migration from JSON
 ```
 
 ## Data Models
@@ -218,99 +241,102 @@ struct StoryProject: Codable      ✅
 struct StoryChapter: Codable      ✅
 struct StoryProjectFile           ✅
 
-// Mapper System  
-struct StoryNode: Codable         ✅
-struct StoryEdge: Codable         ✅
-enum NodeTypes: 19 cases          ✅
-enum NodeState: State machine     ✅
+// Document System
+class WriterDocument              ✅
+class WriterState                 ✅
 ```
 
 ### Styling System
 ```swift
 GlassButtonStyle       ✅ Unified button style
 ToolbarStyle          ✅ Platform variants
-NodeStyle             ✅ State-based styling
 floatingPanelStyle()  ✅ Consistent panels
 ```
 
 ## Performance Profile
 
 ### Current Metrics
-- **Node Rendering**: All nodes (no culling)
-- **Target**: 60fps with 500 nodes
+- **Text Editing**: Native TextEditor (fast)
 - **Panel Switching**: < 100ms
 - **File Operations**: Synchronous
 - **State Updates**: @Published
+- **Auto-save**: 2-second delay timer
 
 ### Known Limitations
-- No virtualization in node canvas
 - Synchronous file I/O
-- No debouncing on text input
+- No markdown rendering optimization
 - All project data in memory
+- No undo/redo stack
 
 ## Technical Health
 
 ### Strengths ✅
 - **Clean Architecture**: Behavior-contract throughout
+- **Document Model**: WriterDocument properly implemented
+- **State Separation**: View state vs document model
 - **Platform Support**: True multi-platform code
 - **Consistent Styling**: Glass-morphism design
-- **Extensibility**: Easy to add node types
 - **Modern Patterns**: SwiftUI best practices
 
 ### Active Issues 🔄
-- **WriterDocument Missing**: Core document model needed
-- **Node Persistence**: Not saved to project
-- **Connections Incomplete**: 70% done
+- **File Browser Redundancy**: 3 implementations need consolidation
+- **Can't Open Files**: Browser doesn't connect to writer
+- **No Save UI**: Backend works, no UI trigger
 - **No Undo/Redo**: Critical for editor
 
 ### Technical Debt 📋
+- **Location Directory**: Should be removed (mapper leftover)
 - **MarkdownUI Integration**: 97 files waiting
 - **Character/Index Persistence**: UI only
-- **Timeline View**: Directory exists, no implementation
+- **Timeline View**: Empty directory
 - **Outline Panel**: Placeholder in ContentView
 
 ## Development Priorities
 
 ### Immediate Focus
-1. Complete node connection system (30% remaining)
-2. Add node persistence to project
-3. Integrate MarkdownUI into Writer
+1. Integrate MarkdownUI into Writer
+2. Consolidate file browsers to single implementation
+3. Connect file browser to writer (open files)
+4. Add save UI trigger
 
-### Next Phase (Post-Mapper)
-1. Create WriterDocument model
-2. Full markdown editing with MarkdownUI
-3. Character/Index data persistence
-4. Implement auto-save
+### Next Phase
+1. Character sheet data model & persistence
+2. Index card CRUD operations
+3. Implement outline panel
+4. Add undo/redo system
 
 ### Future Enhancements
-1. Undo/redo system
-2. Timeline view
-3. Export functionality
-4. Plugin system for node types
+1. Timeline view implementation
+2. Export functionality (PDF, DOCX, HTML)
+3. Theme customization
+4. Plugin system for extensions
 
 ## File Structure Status
 
 ```
 ✅ Active & Working
 ├── App/ContentView.swift         Panel router
-├── Views/Mapper/*                16 files, 80% complete
+├── Views/Writer/*                7 files, 40% complete
 ├── Views/Project/*               4 files, complete
-├── Views/Writer/*                6 files, basic
-├── Core/FileBrowser.swift       Active file browser
+├── Core/FileBrowser.swift       Active but limited
 ├── Managers/ProjectManager.swift Complete
 └── Sources/Shared/*              Platform utilities
 
 🎨 UI Only
 ├── Views/Character/*             Form complete
 ├── Views/Index/*                 Grid complete
-└── Views/Timeline/               Empty directory
+└── Inspector/OutlinerView.swift  Placeholder
 
 ⏳ Ready to Integrate
 └── MarkdownUI/*                  97 files ready
 
+❌ Empty/Unused
+├── Views/Timeline/               Empty directory
+└── Location/                     Should be removed
+
 ❓ Unclear Status
-├── Core/FileSystem.swift         Possibly unused
-└── Core/FileSystemModel.swift    Related to above
+├── Core/FileSystem.swift         Possibly redundant
+└── Core/FileSystemModel.swift    Possibly redundant
 ```
 
 ## Quality Metrics
@@ -329,36 +355,54 @@ floatingPanelStyle()  ✅ Consistent panels
 ## Resource Usage
 
 ### Bundle Size
-- App Logic: ~300KB
-- MarkdownUI: ~2MB (not used yet)
-- Total: ~2.5MB
+- App Logic: ~200KB
+- MarkdownUI: ~2MB (not active yet)
+- Total: ~2.2MB
 
 ### Memory Profile
-- Baseline: ~45MB
-- 100 nodes: ~52MB
-- 500 nodes: ~78MB
-- Target: < 100MB with 1000 nodes
+- Baseline: ~35MB
+- With document: ~40MB
+- Target: < 50MB for typical use
 
 ## Next Sprint Goals
 
 Based on current status and priorities:
 
-1. **Complete Mapper** (1-2 days)
-   - Finish connection system
-   - Add persistence
-   - Basic selection tools
+1. **MarkdownUI Integration** (1 day)
+   - Replace TextEditor in MarkdownWriter
+   - Configure theme and styling
+   - Test rendering performance
 
-2. **Writer Enhancement** (2-3 days)
-   - Create WriterDocument
-   - Integrate MarkdownUI
-   - Add syntax highlighting
+2. **File System Cleanup** (1 day)
+   - Consolidate to single file browser
+   - Connect browser to writer
+   - Add save UI trigger
 
-3. **Data Persistence** (1 day)
-   - Character sheet saving
+3. **Data Persistence** (2 days)
+   - Character sheet model
    - Index card CRUD
    - Project integration
 
 4. **Polish** (1 day)
    - Error handling
-   - Auto-save
    - Basic undo/redo
+   - Accessibility basics
+
+## Success Metrics
+
+### Current Score: 4/10
+- ✅ Works: Basic text editing, project management, navigation
+- ❌ Missing: Markdown rendering, file opening, data persistence
+
+### Target Score: 7/10
+- Markdown fully integrated
+- All panels connected to data
+- File operations complete
+- Basic undo/redo
+
+### Version 1.0 Definition
+- All panels functional with persistence
+- MarkdownUI rendering active
+- Single file browser implementation
+- Document save/load working
+- Export to common formats

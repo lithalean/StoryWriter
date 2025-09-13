@@ -164,6 +164,11 @@ lithalean@Mac StoryWriter % tree
 │   │       │   ├── ImageView.swift
 │   │       │   └── InlineText.swift
 │   │       └── Markdown.swift
+│   ├── Project
+│   │   ├── ProjectBrowser.swift
+│   │   ├── ProjectState.swift
+│   │   ├── ProjectToolbar.swift
+│   │   └── ProjectToolbarConfig.swift
 │   ├── Sources
 │   │   └── Shared
 │   │       ├── Extensions
@@ -179,34 +184,12 @@ lithalean@Mac StoryWriter % tree
 │       ├── Index
 │       │   ├── IndexCard.swift
 │       │   └── IndexWindow.swift
-│       ├── Mapper
-│       │   ├── CanvasBackground.swift
-│       │   ├── CanvasGestureHandler.swift
-│       │   ├── CanvasGrid.swift
-│       │   ├── CanvasLayer.swift
-│       │   ├── EdgeRenderer.swift
-│       │   ├── MapperState.swift
-│       │   ├── MapperToolbar.swift
-│       │   ├── MapperToolbarConfig.swift
-│       │   ├── MapperWindow.swift
-│       │   ├── Node.swift
-│       │   ├── NodeActionOverlay.swift
-│       │   ├── NodePalette.swift
-│       │   ├── NodeRenderer.swift
-│       │   ├── NodeState.swift
-│       │   ├── NodeStyle.swift
-│       │   ├── NodeTypes.swift
-│       │   ├── NodeUI.swift
-│       │   └── StoryFiles.swift
-│       ├── Project
-│       │   ├── ProjectBrowser.swift
-│       │   ├── ProjectState.swift
-│       │   ├── ProjectToolbar.swift
-│       │   └── ProjectToolbarConfig.swift
+│       ├── StatefulPreviewWrapper.swift
 │       ├── Timeline
 │       └── Writer
 │           ├── MarkdownWriter.swift
-│           ├── StatefulPreviewWrapper.swift
+│           ├── WriterDocument.swift
+│           ├── WriterState.swift
 │           ├── WriterStatusbar.swift
 │           ├── WriterToolbar.swift
 │           ├── WriterToolbarConfig.swift
@@ -227,5 +210,5 @@ lithalean@Mac StoryWriter % tree
             └── xcschemes
                 └── xcschememanagement.plist
 
-47 directories, 179 files
-lithalean@Mac StoryWriter %  
+46 directories, 163 files
+lithalean@Mac StoryWriter % 

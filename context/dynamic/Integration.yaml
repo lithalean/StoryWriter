@@ -1,5 +1,5 @@
 # StoryWriter Integration Configuration
-version: 1.0.0
+version: 2.0.0
 last_updated: 2025-01-08
 
 # System Dependencies
@@ -42,67 +42,71 @@ file_system:
     input:
       - extension: ".md"
         type: "Markdown"
-        handler: "MarkdownParser"
+        handler: "TextEditor"  # MarkdownUI ready but not integrated
       - extension: ".markdown"
         type: "Markdown"
-        handler: "MarkdownParser"
+        handler: "TextEditor"
       - extension: ".txt"
         type: "Plain Text"
-        handler: "PlainTextParser"
+        handler: "TextEditor"
+      - extension: ".storyproject"
+        type: "Project File"
+        handler: "ProjectManager"
         
     output:
       - extension: ".md"
         type: "Markdown"
-        handler: "MarkdownWriter"
+        handler: "WriterDocument"
       - extension: ".txt"
         type: "Plain Text"
-        handler: "PlainTextWriter"
+        handler: "WriterDocument"
+      - extension: ".storyproject"
+        type: "Project File"
+        handler: "ProjectManager"
         
   watchers:
     external_changes:
-      enabled: true
+      enabled: false
       debounce_ms: 500
       
     auto_save:
-      enabled: false  # Not yet implemented
-      interval_seconds: 30
+      enabled: true
+      implementation: "WriterDocument"
+      interval_seconds: 2  # 2-second delay timer
 
 # Platform Integration
 platform_services:
   macOS:
     menu_bar:
       enabled: true
-      custom_menus: true
+      custom_menus: false  # Using standard menus
       
     dock:
       badge_count: false
       progress_indicator: false
-      recent_documents: true
+      recent_documents: true  # Via UserDefaults
       
     services:
-      share_menu: true
-      quick_look: true
-      spotlight: false  # Future
+      share_menu: false  # Not implemented
+      quick_look: false  # Not implemented
+      spotlight: false   # Future
       
   iOS:
     share_sheet:
-      enabled: true
-      activities:
-        - copy
-        - print
-        - save_to_files
+      enabled: false  # Not implemented
+      activities: []
         
     document_browser:
-      enabled: false  # Future
+      enabled: false  # Using custom FileBrowser
       
     icloud:
       enabled: false  # Future
       container: "iCloud.com.storywriter"
 
-# External Services (Future)
+# External Services
 external_services:
   cloud_sync:
-    provider: "iCloud"
+    provider: "none"
     status: "not_implemented"
     planned_features:
       - document_sync
@@ -110,52 +114,85 @@ external_services:
       - project_backup
       
   version_control:
-    provider: "Git"
+    provider: "none"
     status: "not_implemented"
-    planned_features:
-      - commit_from_app
-      - branch_management
-      - diff_viewer
+    note: "Users can version control .storyproject files externally"
       
   export_services:
     pdf:
       status: "not_implemented"
       library: "PDFKit"
+      priority: "high"
       
-    epub:
+    html:
       status: "not_implemented"
-      library: "Custom"
+      library: "MarkdownUI renderer"
+      priority: "medium"
       
     docx:
       status: "not_implemented"
       library: "Unknown"
+      priority: "low"
+
+# MarkdownUI Integration
+markdown_ui:
+  status: "ready_not_integrated"
+  files: 97
+  location: "MarkdownUI/"
+  components:
+    parser: "Complete"
+    renderer: "Complete"
+    dsl: "Complete"
+    themes: "Complete"
+  integration_plan:
+    - "Replace TextEditor in MarkdownWriter"
+    - "Configure theme system"
+    - "Add syntax highlighting"
+    - "Connect to WriterDocument"
+  strategic_value:
+    - "Reuse in SyntaxWriter project"
+    - "Reuse in LocalLLM project"
+    - "Consider XCFramework packaging"
 
 # Database Integration
 database:
-  type: "none"
-  future_consideration:
-    type: "CoreData"
-    usage:
-      - character_database
-      - location_database
-      - project_metadata
-      - search_index
+  current: "JSON files"
+  storage_location: "~/Documents/StoryWriter Projects"
+  format: "Pretty-printed JSON"
+  
+  swiftdata:
+    status: "scaffolded_unused"
+    model: "Item.swift"
+    plan: "Future migration from JSON"
+    
+  future_models:
+    character_database:
+      status: "ui_only"
+      needs: "Data model implementation"
+    index_cards:
+      status: "ui_only"  
+      needs: "CRUD operations"
+    timeline:
+      status: "not_implemented"
+      needs: "Complete feature"
 
 # Network Integration
 network:
   current_usage: "none"
+  offline_first: true
+  
   future_features:
     collaboration:
       protocol: "WebSocket"
-      status: "planned"
+      status: "not_planned"
       
     cloud_backup:
       protocol: "HTTPS"
-      status: "planned"
+      status: "considered"
       
     plugin_repository:
       protocol: "HTTPS"
-      status: "considered"
+      status: "not_planned"
 
 # Security & Privacy
 security:
@@ -167,7 +204,7 @@ security:
       
   encryption:
     at_rest: false  # Relies on FileVault
-    in_transit: "n/a"  # No network features yet
+    in_transit: "n/a"  # No network features
     
   privacy:
     analytics: false
@@ -179,47 +216,53 @@ distribution:
   app_store:
     ready: false
     blockers:
-      - "Auto-save implementation"
-      - "Crash recovery"
+      - "Save UI implementation"
+      - "File browser consolidation"
+      - "MarkdownUI integration"
+      - "Undo/redo system"
       - "App icon"
-      - "Marketing materials"
       
   direct_distribution:
-    ready: true
+    ready: false
     format: ".app bundle"
     signing: "Development"
+    blockers:
+      - "Critical features missing"
     
   testflight:
     ready: false
     requirements:
       - "Apple Developer Account"
       - "App Store Connect setup"
+      - "Feature completion"
 
-# Plugin Architecture (Future)
-plugins:
-  status: "not_implemented"
-  planned_api:
-    markdown_extensions:
-      - custom_blocks
-      - custom_renderers
-      - syntax_highlighters
-      
-    node_types:
-      - custom_node_renderers
-      - custom_node_behaviors
-      
-    export_formats:
-      - custom_exporters
-      - format_converters
+# StoryMapper Integration
+story_mapper:
+  status: "separated_application"
+  relationship: "Independent sibling app"
+  shared_format: ".storyproject (without node data)"
+  removed_components:
+    - "16 mapper-related files"
+    - "Node system"
+    - "Canvas visualization"
+    - "Edge connections"
+  future_integration:
+    - "Potential plugin architecture"
+    - "Shared project format"
+    - "Inter-app communication"
 
 # Performance Monitoring
 monitoring:
   metrics:
     tracked: false
+    current_focus:
+      - text_editing_performance
+      - panel_switching_speed
+      - file_operations
     planned:
       - launch_time
       - document_load_time
-      - markdown_parse_time
+      - markdown_render_time
       - memory_usage
       
   crash_reporting:
@@ -227,38 +270,36 @@ monitoring:
     service: "none"
     
   logging:
-    level: "debug"  # In development
+    level: "debug"
     destination: "console"
 
 # Dependency Management
 package_management:
   type: "Swift Package Manager"
   packages: []  # No external packages
-  
-# API Endpoints (Future)
-api_endpoints:
-  internal: []
-  external: []
-  
-# Webhook Integration (Future)
-webhooks:
-  supported: false
-  planned_events:
-    - project_created
-    - document_saved
-    - export_completed
+  internal_libraries:
+    MarkdownUI:
+      status: "included_not_integrated"
+      files: 97
+      size: "~2MB"
 
 # Accessibility APIs
 accessibility:
   voiceover:
-    supported: true
+    supported: "partial"
     tested: false
     
   keyboard_navigation:
-    full_support: true
+    full_support: false
+    implemented:
+      - "Basic tab navigation"
+    missing:
+      - "Complete keyboard shortcuts"
+      - "Command palette"
     
   dynamic_type:
     supported: true
+    font_range: "11-24pt"
     
   reduced_motion:
     respected: true
@@ -268,10 +309,18 @@ testing:
   unit_tests:
     framework: "XCTest"
     coverage: 0
+    priority_areas:
+      - "WriterState bounds"
+      - "WriterDocument save/load"
+      - "Config behaviors"
     
   ui_tests:
     framework: "XCTest"
     coverage: 0
+    priority_areas:
+      - "Panel switching"
+      - "Font size controls"
+      - "File browser"
     
   integration_tests:
     framework: "XCTest"
@@ -284,14 +333,9 @@ testing:
 # Localization
 localization:
   supported_languages:
-    - en  # English
+    - en  # English only
     
-  planned_languages:
-    - es  # Spanish
-    - fr  # French
-    - de  # German
-    - ja  # Japanese
-    - zh  # Chinese
+  planned_languages: []  # No immediate plans
     
   localization_framework: "Foundation"
   
@@ -300,12 +344,54 @@ feature_flags:
   development:
     debug_menu: true
     verbose_logging: true
+    show_fps: false
     
   production:
     debug_menu: false
     verbose_logging: false
     
   experimental:
-    ai_assistance: false
-    collaborative_editing: false
-    voice_input: false
+    markdown_ui_integration: false  # Ready but not active
+    swiftdata_migration: false
+    export_functionality: false
+
+# Known Issues
+known_issues:
+  critical:
+    - "No save UI trigger in toolbar"
+    - "File browser can't open files"
+    - "Three redundant file browser implementations"
+    
+  major:
+    - "MarkdownUI not integrated (97 files unused)"
+    - "Character/Index panels have no persistence"
+    - "No undo/redo system"
+    
+  minor:
+    - "Location directory still present (should be removed)"
+    - "Timeline directory empty"
+    - "Outline panel placeholder only"
+
+# File Browser Consolidation
+file_browser_status:
+  implementations:
+    FileBrowser:
+      location: "Core/FileBrowser.swift"
+      status: "active"
+      functionality: "50% - browse only"
+      
+    FileSystem:
+      location: "Core/FileSystem.swift"
+      status: "unclear"
+      functionality: "unknown"
+      
+    FileSystemModel:
+      location: "Core/FileSystemModel.swift"
+      status: "unclear"
+      functionality: "unknown"
+      
+  consolidation_plan:
+    - "Evaluate which implementation to keep"
+    - "Remove redundant implementations"
+    - "Connect to WriterDocument"
+    - "Add file opening capability"

@@ -23,14 +23,10 @@ Sources/Shared/
 ├── GlassButtonStyle.swift      # Unified button styling
 └── ToolbarStyle.swift          # Platform adaptations
 
-Views/Mapper/
-├── MapperToolbar.swift         # Canvas toolbar UI
-└── MapperToolbarConfig.swift   # Canvas behaviors
-
 Views/Project/
-├── ProjectToolbar.swift        # Project toolbar UI
-├── ProjectToolbarConfig.swift  # Project behaviors
-└── ProjectState.swift          # Section navigation enum
+├── ProjectToolbar.swift        # Main navigation UI
+├── ProjectToolbarConfig.swift  # Navigation behaviors
+└── ProjectState.swift          # Section enum (3 panels)
 
 Views/Writer/
 ├── WriterToolbar.swift         # Editor toolbar UI
@@ -39,29 +35,6 @@ Views/Writer/
 
 ## Implementation
 
-### MapperToolbar
-
-Canvas controls for the node-based story mapper.
-
-**Config Structure:**
-- `zoomIn/zoomOut`: Scale adjustment (0.1x to 6.0x)
-- `reset`: Return to default view
-- `toggleGrid/isGridOn`: Grid visibility
-- `toggleSnap/isSnapOn`: Snap-to-grid behavior
-- `pickType`: Node type selection from palette
-
-**Features:**
-- Zoom range: 0.1x to 6.0x with 15% increments
-- Grid overlay toggle
-- Snap-to-grid (20pt grid)
-- Node palette menu with categories
-
-**Node Palette Integration:**
-```swift
-let nodePalette: NodePalette
-// Provides categories and types for Add menu
-```
-
 ### ProjectToolbar
 
 Main navigation and project management.
@@ -69,30 +42,63 @@ Main navigation and project management.
 **Config Structure:**
 - `isInspectorVisible/toggleSidebar`: Inspector panel control
 - `newProject`: Create new project
-- `undo`: Undo last action
-- `export`: Export project
-- `selectedSection/selectSection`: Section navigation
+- `undo`: Undo last action (not implemented)
+- `export`: Export project (not implemented)
+- `selectedSection/selectSection`: Panel navigation
 
-**Sections (ProjectState):**
-- `storyFiles`: Document management
-- `characters`: Character sheets
-- `locations`: Location management  
-- `timeline`: Timeline view
+**Panels (3 sections):**
+```swift
+selectedCenterButton:
+  0 → WriterWindow (pen icon)
+  1 → CharacterSheet (person icon)  
+  2 → IndexWindow (grid icon)
+```
+
+**Features:**
+- Single-window panel switching
+- Inspector toggle with animation
+- Glass morphism styling
+- Platform-adaptive layout
 
 ### WriterToolbar
 
-Markdown editor controls.
+Text editor controls with comprehensive writing tools.
 
-**Config Structure:**
-- `fontSize/setFontSize`: Font size control (11-24pt)
-- `clearText`: Clear document
-- `wordCount`: Word count telemetry
+**Config Structure (Simplified):**
+```swift
+struct WriterToolbarConfig {
+    var fontSize: CGFloat
+    var setFontSize: (CGFloat) -> Void
+    var incrementFontSize: () -> Void
+    var decrementFontSize: () -> Void
+    var showLineNumbers: Bool
+    var toggleLineNumbers: () -> Void
+    var wordCount: Int
+    var lineCount: Int
+    var isDirty: Bool
+}
+```
 
 **Features:**
-- Font size slider with 1pt steps
-- Live word count display
-- Clear document action
-- Minimal height design
+- Font size controls (11-24pt range)
+  - Increment/decrement buttons (+/-)
+  - Current size display
+- Line numbers toggle
+- Word count display
+- Line count display
+- Unsaved changes indicator (isDirty)
+
+**Implementation Details:**
+```swift
+// Font size bounds enforced in WriterState
+func incrementFontSize() {
+    fontSize = min(24, fontSize + 1)
+}
+
+func decrementFontSize() {
+    fontSize = max(11, fontSize - 1)
+}
+```
 
 ## Styling
 
@@ -100,8 +106,9 @@ Markdown editor controls.
 
 Shared button style with glass morphism effect:
 - Ultra-thin material background
-- 8pt corner radius
-- Press animation (0.95 scale)
+- 10pt corner radius (continuous)
+- Press animation (0.97 scale)
+- 0.08 opacity border
 - Consistent across all toolbars
 
 ### ToolbarStyle
@@ -118,7 +125,7 @@ enum ToolbarStyle {
 
 All toolbars share:
 - 10pt internal padding
-- 14pt corner radius
+- 14pt corner radius (continuous)
 - Ultra-thin material background
 - 0.08 opacity border
 - Shadow with 10pt radius, 4pt Y offset
@@ -127,14 +134,16 @@ All toolbars share:
 ## Platform Support
 
 ### macOS
-- Native menu styling
+- Native styling
 - Hover states enabled
 - Compact spacing
+- Keyboard shortcut hints
 
 ### iOS/iPadOS  
-- Glass button style for menus
-- Enlarged touch targets
-- Haptic feedback
+- Glass button style for controls
+- 44pt minimum touch targets
+- Haptic feedback ready
+- Adaptive layouts
 
 ### tvOS
 - iOS styling adapted
@@ -143,22 +152,30 @@ All toolbars share:
 
 ## State Management
 
-### Config Pattern
+### Config Pattern Example (Writer)
 
 ```swift
 // Parent owns state
-@StateObject private var state = MapperState()
+@StateObject private var state = WriterState()
+@StateObject private var document = WriterDocument()
 
 // Config provides behaviors
-private var toolbarConfig: MapperToolbarConfig {
-    MapperToolbarConfig(
-        zoomIn: { state.scale *= 1.15 },
-        zoomOut: { state.scale *= 0.85 }
+private var toolbarConfig: WriterToolbarConfig {
+    WriterToolbarConfig(
+        fontSize: state.fontSize,
+        setFontSize: { state.fontSize = $0 },
+        incrementFontSize: { state.incrementFontSize() },
+        decrementFontSize: { state.decrementFontSize() },
+        showLineNumbers: state.showLineNumbers,
+        toggleLineNumbers: { state.showLineNumbers.toggle() },
+        wordCount: state.wordCount,
+        lineCount: state.lineCount,
+        isDirty: document.isDirty
     )
 }
 
 // Toolbar receives config
-MapperToolbar(config: toolbarConfig)
+WriterToolbar(config: toolbarConfig)
 ```
 
 ### No Direct State
@@ -168,6 +185,7 @@ Toolbars never contain:
 - `@StateObject`
 - `@ObservedObject`
 - `@EnvironmentObject`
+- `@Binding` (except in previews)
 
 ## Preview Support
 
@@ -175,8 +193,8 @@ All toolbars include platform previews using `StatefulPreviewWrapper`:
 
 ```swift
 #Preview("macOS") {
-    StatefulPreviewWrapper(initialValue) { binding in
-        Toolbar(config: mockConfig)
+    StatefulPreviewWrapper(WriterToolbarConfig.mock) { config in
+        WriterToolbar(config: config)
             .toolbarStyle(.macOS)
     }
 }
@@ -188,13 +206,27 @@ All toolbars include platform previews using `StatefulPreviewWrapper`:
 
 Config behaviors are pure functions:
 ```swift
-func testZoom() {
-    var scale = 1.0
-    let config = MapperToolbarConfig(
-        zoomIn: { scale *= 1.15 }
+func testFontSizeIncrement() {
+    var fontSize: CGFloat = 14
+    let config = WriterToolbarConfig(
+        incrementFontSize: { 
+            fontSize = min(24, fontSize + 1)
+        }
     )
-    config.zoomIn()
-    XCTAssertEqual(scale, 1.15)
+    config.incrementFontSize()
+    XCTAssertEqual(fontSize, 15)
+}
+
+func testFontSizeBounds() {
+    // Test upper bound
+    var fontSize: CGFloat = 24
+    config.incrementFontSize()
+    XCTAssertEqual(fontSize, 24) // Should not exceed
+    
+    // Test lower bound
+    fontSize = 11
+    config.decrementFontSize()
+    XCTAssertEqual(fontSize, 11) // Should not go below
 }
 ```
 
@@ -204,6 +236,7 @@ func testZoom() {
 - Animation smoothness
 - Touch/click targets
 - Accessibility labels
+- State synchronization
 
 ## Best Practices
 
@@ -213,6 +246,7 @@ func testZoom() {
 - Maintain consistent styling
 - Include platform previews
 - Test behavior contracts
+- Enforce bounds in state objects
 
 ### DON'T
 - Add state to toolbars
@@ -220,11 +254,28 @@ func testZoom() {
 - Override glass styling
 - Forget accessibility
 - Make toolbars too tall
+- Put business logic in configs
+
+## Accessibility
+
+### Current Support
+- `.help()` tooltips on buttons
+- Semantic button labels
+- Standard SwiftUI accessibility
+
+### Planned Improvements
+- VoiceOver optimization
+- Keyboard shortcuts
+- Focus indicators
+- Custom accessibility actions
 
 ## Future Enhancements
 
-- [ ] Customizable layouts
-- [ ] Keyboard shortcuts
-- [ ] Context tooltips
-- [ ] Toolbar presets
-- [ ] Collapsible sections
+- [ ] Save/Open buttons in WriterToolbar
+- [ ] Undo/Redo functionality
+- [ ] Export options
+- [ ] Find/Replace controls
+- [ ] Markdown preview toggle
+- [ ] Theme selection
+- [ ] Keyboard shortcuts display
+- [ ] Customizable toolbar layouts

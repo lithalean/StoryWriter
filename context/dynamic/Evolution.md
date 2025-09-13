@@ -1,16 +1,17 @@
 # StoryWriter Evolution & Decision Log
 
-**Project Created**: 8/26/25 by Tyler Allen  
+**Project Created**: 8/26/24 by Tyler Allen  
 **Development Time**: 4-6 hours (rapid prototype)  
-**Documentation Created**: 2025-01-08
+**Major Refactor**: January 2025 (separation into StoryWriter/StoryMapper)
+**Documentation Updated**: 2025-01-08
 
 ## Project Genesis
 
 ### The Sprint
-**Date**: 8/26/25  
+**Date**: 8/26/24  
 **Duration**: 4-6 hours continuous coding  
 **Context**: Rapid prototype development  
-**Result**: 169 files including complete MarkdownUI library (97 files)
+**Result**: 179 files including complete MarkdownUI library (97 files)
 
 ## Actual Development Timeline (Reconstructed)
 
@@ -44,275 +45,225 @@
 - Toolbars and status bars
 - Material design styling
 
-## Major Design Decisions (Inferred)
+## January 2025 Refactoring
+
+### The Split Decision
+**Date**: January 2025  
+**Change**: Separated StoryWriter and StoryMapper into independent applications  
+**Files Moved**: 16 mapper-related files → StoryMapper  
+**Files Added**: WriterDocument.swift, WriterState.swift
+
+### What Changed
+
+#### Removed from StoryWriter
+```
+Views/Mapper/          (16 files total)
+├── MapperWindow.swift
+├── MapperToolbar.swift
+├── MapperToolbarConfig.swift
+├── MapperCanvas.swift
+├── NodeRenderer.swift
+├── NodeUI.swift
+├── NodeTypes.swift
+├── NodeState.swift
+├── NodeActionOverlay.swift
+├── EdgeRenderer.swift
+├── CanvasGestureHandler.swift
+├── NodePalette.swift
+├── NodeStore.swift
+├── EdgeStore.swift
+├── MapperState.swift
+└── GridOverlay.swift
+```
+
+#### Added to StoryWriter
+```
+Views/Writer/
+├── WriterDocument.swift    ✅ Document model (finally!)
+└── WriterState.swift       ✅ View state management
+```
+
+#### Still Present (Oversight)
+```
+Location/
+└── LocationSheet.swift     ❌ Should have been removed
+```
+
+### Rationale for Split
+- **Focus**: Each app has clear purpose
+- **Complexity**: Mapper was dominating codebase
+- **Performance**: Smaller, faster apps
+- **Maintenance**: Easier to update independently
+
+### Impact Analysis
+- **File Count**: 179 → 163 files
+- **Core Files**: ~66 (excluding MarkdownUI)
+- **Writer Status**: 20% → 40% complete
+- **Critical Issue Resolved**: WriterDocument now exists
+
+## Major Design Decisions
 
 ### Decision 1: Single Window Architecture
 **Choice**: One window with switchable panels
-
-**Likely Rationale**:
-- Faster to implement
-- Better iOS compatibility
-- Simpler state management
-- Time constraint (4-6 hours)
-
-**Result**: ✅ Works but limits functionality
-
----
+**Rationale**: Faster to implement, iOS compatibility
+**Result**: ✅ Works, simplified after split
 
 ### Decision 2: JSON Over SwiftData
 **Choice**: Use JSON files despite SwiftData setup
-
-**Likely Rationale**:
-- SwiftData complexity
-- Quick prototype needs
-- Familiar pattern
-- Direct file control
-
+**Rationale**: Quick prototype needs, familiar pattern
 **Result**: ✅ Simple but not scalable
-
----
 
 ### Decision 3: Import MarkdownUI Library
 **Choice**: Include 97-file markdown system
+**Rationale**: Planned for rendering, future-proofing
+**Result**: ⏳ Still not integrated, strategic asset
 
-**Likely Rationale**:
-- Planned to use for rendering
-- Found existing library
-- Future-proofing
-
-**Result**: ❌ Never integrated, wasted effort
-
----
-
-### Decision 4: Focus on Mapper
+### Decision 4: Focus on Mapper (Original)
 **Choice**: Build complete visual mapper system
-
-**Likely Rationale**:
-- Most interesting feature
-- Visual appeal
-- Differentiator
-- Fun to build
-
-**Result**: ✅ Most complete feature
-
----
+**Rationale**: Most interesting feature, visual appeal
+**Result**: ✅ So successful it became separate app
 
 ### Decision 5: Three File Browsers
-**Choice**: Built three different file browser implementations
+**Choice**: Built three different implementations
+**Rationale**: Iteration on approach, time pressure
+**Result**: ❌ Still confusing redundancy
 
-**Likely Rationale**:
-- Iteration on approach
-- Platform differences
-- Unclear requirements
-- No time to refactor
+### Decision 6: Split Applications (2025)
+**Choice**: Separate StoryWriter and StoryMapper
+**Rationale**: Focus, maintainability, performance
+**Result**: ✅ Cleaner architecture, clearer purpose
 
-**Result**: ❌ Confusing redundancy
-
-## Technical Pivots During Development
+## Technical Pivots
 
 ### TextEditor Instead of MarkdownUI
 **Started**: MarkdownUI integration  
 **Pivoted To**: Simple TextEditor  
-**Why**: Time pressure, complexity  
-**Impact**: 97 unused files
+**Status 2025**: Still using TextEditor, MarkdownUI ready
 
-### Multiple File Browser Attempts
-**Attempt 1**: FileSystem.swift (complex, platform-aware)  
-**Attempt 2**: FileBrowser.swift (simpler)  
-**Attempt 3**: FileSystemModel.swift (view model)  
-**Why**: Each attempt tried different approach  
-**Impact**: Unclear which is active
+### WriterDocument Implementation
+**Original**: Referenced but missing  
+**2025**: Finally implemented with auto-save
 
-## What Went Right
+### Panel Count Reduction
+**Original**: 4+ panels (writer, mapper, index, character)  
+**2025**: 3 panels (writer, character, index)
 
-### Successful Implementations
-1. **Mapper System** - Fully functional, visually appealing
-2. **Project Structure** - Clean JSON model
-3. **Panel UI** - Smooth switching, good looking
-4. **Platform Setup** - Multi-platform from start
-5. **Visual Design** - Consistent material style
+## Current State Analysis (Post-Split)
 
-### Good Architectural Choices
-- SwiftUI throughout
-- ObservableObject pattern
-- Codable models
-- Platform conditionals
-- Component separation
+### Stability: IMPROVING
+- WriterDocument now exists ✅
+- WriterState implemented ✅
+- Auto-save timer working ✅
+- File browser issues remain ❌
 
-## What Went Wrong
-
-### Failed Integrations
-1. **MarkdownUI** - 97 files never used
-2. **SwiftData** - Set up but abandoned
-3. **WriterDocument** - Referenced but never created
-
-### Incomplete Features
-1. **Writer** - No actual markdown functionality
-2. **Index Cards** - Static UI only
-3. **Character Sheet** - No persistence
-4. **File Browser** - Doesn't open files
-
-### Architectural Issues
-1. **Three file browsers** - Redundant code
-2. **No data flow** - Panels disconnected
-3. **Missing core** - No document model
-4. **No persistence** - Most data ephemeral
-
-## Time Analysis
-
-### Time Well Spent (~3 hours)
-- Mapper implementation
-- Basic app structure
-- UI styling
-- Project model
-
-### Time Wasted (~2 hours)
-- MarkdownUI library (never used)
-- Multiple file browsers
-- SwiftData setup (abandoned)
-- Non-functional UI
-
-### Missing Critical Features (~1 hour needed)
-- Save/load UI
-- Document model
-- Data persistence
-- Error handling
-
-## Lessons Learned
-
-### About Rapid Prototyping
-1. **Focus on one thing** - Mapper succeeded because focused effort
-2. **Don't import large libraries** - MarkdownUI waste
-3. **Build vertical slices** - Complete features, not UI shells
-4. **Defer complexity** - TextEditor was right choice
-
-### About Architecture
-1. **Start simple** - Single window was correct
-2. **Don't premix patterns** - SwiftData + JSON confused
-3. **One implementation** - Three file browsers bad
-4. **Connect early** - Disconnected panels problematic
-
-### About Time Management
-1. **4-6 hours too short** - For complete app
-2. **Polish vs function** - Chose polish (materials, animations)
-3. **Documentation debt** - Accumulated immediately
-4. **Testing impossible** - No time for any tests
-
-## Current State Analysis
-
-### Stability: FRAGILE
-- Missing core components (WriterDocument)
-- No error handling
-- No data persistence
-- Untested code
-
-### Completeness: 30%
-- Mapper: 90% complete
-- Writer: 20% complete
-- Index: 10% complete
-- Character: 15% complete
+### Completeness: 40%
+- Writer: 40% complete (up from 20%)
+- Index: 10% complete (UI only)
+- Character: 15% complete (UI only)
 - File Browser: 50% complete
 
-### Usability: LIMITED
-- Can view UI
-- Can play with mapper
-- Can type text
-- Cannot save work
+### Usability: BETTER
+- Can edit text with controls
+- Font size management works
+- Word/line counting functional
+- Still can't trigger saves
 
-## Recovery Plan
+## Recovery Plan (Updated)
 
-### Phase 1: Stabilize (2 hours)
-1. Create WriterDocument.swift
-2. Remove 2 file browsers
-3. Connect one file browser
-4. Add basic save/load
+### Phase 1: Consolidate (1 day)
+1. ~~Create WriterDocument.swift~~ ✅ DONE
+2. Remove 2 redundant file browsers
+3. Connect file browser to writer
+4. Add save UI trigger
+5. Remove Location directory
 
-### Phase 2: Complete Core (4 hours)
-1. Integrate OR remove MarkdownUI
-2. Connect panels to ProjectManager
-3. Add persistence to all components
-4. Implement auto-save
+### Phase 2: Integrate (2 days)
+1. Integrate MarkdownUI into writer
+2. Character data model & persistence
+3. Index card CRUD operations
+4. Connect all panels to ProjectManager
 
-### Phase 3: Polish (2 hours)
+### Phase 3: Polish (1 day)
 1. Error handling
-2. Empty states
-3. Loading states
+2. Undo/redo system
+3. Export functionality
 4. Keyboard shortcuts
 
-## Technical Debt Priority
+## Technical Debt Priority (Updated)
 
-### Critical (Breaks app)
+### Critical (Blocks usage)
 ```yaml
 HIGH:
-  - WriterDocument.swift missing
-  - No save functionality
+  - No save UI trigger
+  - File browser can't open files
+  - Location directory still present
+```
+
+### Major (Limits features)
+```yaml
+MEDIUM:
+  - Three file browser implementations
+  - 97 unused MarkdownUI files (strategic)
+  - Character/Index no persistence
   - No undo/redo
 ```
 
-### Major (Limits use)
-```yaml
-MEDIUM:
-  - Three file browsers
-  - 97 unused MarkdownUI files
-  - Disconnected panels
-  - No persistence
-```
-
-### Minor (Cosmetic)
+### Minor (Can wait)
 ```yaml
 LOW:
-  - Empty toolbars
-  - Static index cards
-  - Unused SwiftData
+  - Timeline directory empty
+  - Outline panel placeholder
   - Platform inconsistencies
 ```
 
-## Retrospective Questions
+## Lessons Learned
 
-### Why MarkdownUI but TextEditor?
-Likely imported library early, realized integration complexity, pivoted to TextEditor to make progress, never cleaned up.
+### From Original Sprint
+1. **Focus wins**: Mapper succeeded due to focus
+2. **Libraries costly**: MarkdownUI integration harder than expected
+3. **Vertical slices**: Complete features better than UI shells
+4. **Time unrealistic**: 4-6 hours too short for full app
 
-### Why three file browsers?
-Probably tried different approaches for different needs, ran out of time to consolidate.
-
-### Why focus on Mapper?
-Most interesting technically, most visual impact, most fun to build.
-
-### Why missing saves?
-Ran out of time after UI work, save/load less interesting than features.
-
-## Future Architecture Recommendations
-
-### If Starting Over
-1. **Start with document model** - WriterDocument first
-2. **One file browser** - Design once, use everywhere
-3. **Skip MarkdownUI** - Until core works
-4. **Vertical slices** - One complete feature at a time
-5. **Save early** - Data persistence from start
-
-### For Current Code
-1. **Delete unused code** - MarkdownUI, extra browsers
-2. **Create missing pieces** - WriterDocument
-3. **Connect components** - Through ProjectManager
-4. **Add saves** - Before any new features
-5. **Then enhance** - Markdown, etc.
+### From 2025 Split
+1. **Separation good**: Focused apps better than monoliths
+2. **Document models critical**: WriterDocument essential
+3. **Clean as you go**: Should have removed Location/
+4. **Strategic assets**: MarkdownUI valuable for future
 
 ## Success Metrics
 
-### What Success Looks Like
-- Can create, edit, save documents
-- Mapper saves with project
-- All panels connected to data
-- No duplicate implementations
-- No unused code
-
-### Current Score: 3/10
-- Works: Basic UI, mapper viz, typing
-- Doesn't: Save, load, persist, integrate
+### Current Score: 4/10
+- ✅ Works: Text editing, font controls, project structure
+- ❌ Missing: Save UI, file opening, markdown rendering
 
 ### Target Score: 7/10
-- Stable core
-- Feature complete
-- Data persistent
-- Code clean
-- Room to grow
+- Markdown fully integrated
+- All panels persistent
+- Single file browser
+- Export functionality
+
+### Version 1.0 Definition
+- All panels functional with data
+- MarkdownUI rendering active
+- Document save/load working
+- File browser consolidated
+- Export to common formats
+
+## Future Considerations
+
+### MarkdownUI Strategy
+- Consider XCFramework for reuse
+- Share with SyntaxWriter/LocalLLM projects
+- ~2MB overhead worth it for quality
+
+### Architecture Evolution
+- SwiftData migration path
+- Plugin system for extensions
+- Cloud sync consideration
+- Collaboration features
+
+### StoryMapper Integration
+- Potential re-integration as plugin
+- Shared project format
+- Cross-app communication
+- Unified workspace option

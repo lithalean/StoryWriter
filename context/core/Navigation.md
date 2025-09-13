@@ -18,9 +18,9 @@ ContentView (Router)
     ├── Inspector Panel (Toggleable sidebar)
     └── Main Panel (Switchable content)
         ├── WriterWindow
-        ├── IndexWindow  
-        ├── MapperWindow
-        └── Outline (Placeholder)
+        ├── CharacterSheet
+        ├── IndexWindow
+        └── Timeline (Future)
 ```
 
 ## Navigation Control
@@ -35,11 +35,13 @@ ProjectToolbarConfig:
   selectSection: (ProjectState) -> Void
 ```
 
-**Sections:**
-- `storyFiles` → WriterWindow
-- `chapters` → Outline (placeholder)
-- `characters` → IndexWindow
-- `locations` → MapperWindow
+**Sections (3 panels):**
+```swift
+selectedCenterButton:
+  0 → WriterWindow (pen icon)
+  1 → CharacterSheet (person icon)
+  2 → IndexWindow (grid icon)
+```
 
 ### Inspector Toggle
 
@@ -56,62 +58,65 @@ Animated with spring: `response: 0.35, dampingFraction: 0.85`
 ### 1. Writing Flow
 
 ```
-User clicks story files icon
+User clicks pen icon
     → ContentView.selectedCenterButton = 0
     → WriterWindow displays
         → WriterToolbar (functional)
-            - Font size slider (11-24pt)
-            - Clear text button
+            - Font size controls (11-24pt)
+            - Increment/decrement buttons
+            - Line numbers toggle
             - Word count display
-        → MarkdownWriter (TextEditor)
-        → WriterStatusbar (document info)
+            - Line count display
+            - Dirty state indicator
+        → MarkdownWriter (TextEditor now)
+        → WriterStatusbar (metrics)
 
 Capabilities:
-✅ Adjust font size
-✅ Clear document
-✅ See word count
-✅ Type in monospace editor
+✅ Adjust font size (11-24pt range)
+✅ Toggle line numbers
+✅ See word/line count
+✅ Track dirty state
+✅ Auto-save timer (2 seconds)
 ⏳ Markdown rendering (MarkdownUI ready)
-❌ Document persistence
+🔄 Document persistence (WriterDocument exists)
 ```
 
-### 2. Mapper Flow
+### 2. Character Management Flow
 
 ```
-User clicks locations icon
-    → ContentView.selectedCenterButton = 3
-    → MapperWindow displays
-        → MapperToolbar
-            - Zoom in/out
-            - Reset view
-            - Toggle grid/snap
-            - Add node menu (19 types)
-        → Canvas with nodes/edges
+User clicks person icon
+    → ContentView.selectedCenterButton = 1
+    → CharacterSheet displays
+        → Form sections:
+            - Basic Info
+            - Physical Description
+            - Development
+            - Notes
+        → Responsive layout (>700pt side-by-side)
 
 Capabilities:
-✅ Add nodes (placement mode)
-✅ Drag nodes around
-✅ Pan/zoom canvas (gestures)
-✅ Delete nodes (hover on macOS)
-✅ Snap to grid (20pt)
-🔄 Connect nodes (70% complete)
-❌ Save map to project
+✅ Complete UI form
+✅ Responsive design
+🎨 Visual design complete
+❌ Data persistence
+❌ Project integration
 ```
 
 ### 3. Index Card Flow
 
 ```
-User clicks characters icon
+User clicks grid icon
     → ContentView.selectedCenterButton = 2
     → IndexWindow displays
         → Responsive grid (220pt min width)
-        → 9 static cards
+        → Static example cards
 
 Capabilities:
 ✅ Responsive layout
 🎨 Visual design complete
-❌ Card interaction
+❌ Card CRUD operations
 ❌ Data binding
+❌ Drag and drop
 ```
 
 ### 4. Inspector/File Browser Flow
@@ -127,7 +132,7 @@ User toggles sidebar
 
 Capabilities:
 ✅ Browse file tree
-✅ Create folders/markdown files  
+✅ Create folders/markdown files
 ✅ Delete items
 ✅ Expand/collapse folders
 ✅ Color-coded icons
@@ -136,69 +141,34 @@ Capabilities:
 ❌ Properties editing
 ```
 
-## Gesture System
-
-### Canvas Gestures (Mapper)
-
-```swift
-CanvasGestureHandler:
-  - MagnificationGesture (pinch zoom)
-  - DragGesture (pan)
-  - Snap to common zoom levels
-  - Coordinate conversion (screen ↔ canvas)
-```
-
-**Zoom Levels:** 0.25x, 0.5x, 0.75x, 1.0x, 1.5x, 2.0x, 3.0x  
-**Grid Snap:** 20pt grid when enabled
-
-### Inspector Gestures
-
-```swift
-DraggableDivider:
-  - Vertical resize
-  - Min section height: 100pt
-  - Animated cursor change (macOS)
-  - Visual feedback on drag
-```
-
-### Node Gestures
-
-```swift
-NodeRenderer:
-  - Tap to select
-  - Drag to move
-  - Hover for delete (macOS)
-  - Double-tap (defined, usage unclear)
-```
-
 ## State Management
 
 ### Global State (ContentView)
 
 ```swift
 @StateObject projectManager = ProjectManager()
-@StateObject document = WriterDocument() // Referenced but doesn't exist
 @State showInspector = true
 @State selectedCenterButton = 0
 ```
 
 ### Panel-Specific State
 
-**MapperWindow:**
-```swift
-@StateObject state = MapperState()      // Zoom, pan, grid
-@StateObject nodeStore = NodeStore()    // Node management
-@StateObject edgeStore = EdgeStore()    // Edge management
-@State pendingAdd: NodeTypes?           // Placement mode
-@State pendingNode: StoryNode?          // Node being placed
-```
-
 **WriterWindow:**
 ```swift
-@State fontSize: CGFloat = 15
-@State markdownText: String = ""
-@StateObject document = WriterDocument() // Doesn't exist
-@StateObject projectManager              // Duplicate of global
+@StateObject state = WriterState()           // View state
+@StateObject document = WriterDocument()     // Document model
+```
+
+**CharacterSheet:**
+```swift
+@State character model (not implemented)
+// UI state only currently
+```
+
+**IndexWindow:**
+```swift
+// Static cards only
+// No state management yet
 ```
 
 ## Animation System
@@ -209,7 +179,7 @@ NodeRenderer:
 // Panel transitions
 .spring(response: 0.35, dampingFraction: 0.85)
 
-// Node interactions
+// Card interactions
 .spring(response: 0.3, dampingFraction: 0.8)
 
 // Quick feedback
@@ -222,16 +192,18 @@ NodeRenderer:
 ## Platform Adaptations
 
 ### macOS
-- Hover states (nodes, file items)
-- Cursor changes (resize, arrow)
+- Hover states (file items, cards)
+- Cursor changes (text, resize)
 - Native menu styling
 - 320pt inspector width
+- Keyboard shortcuts
 
 ### iOS/iPadOS
 - Touch-optimized targets
 - Glass button style for menus
 - 280pt inspector width
 - Sheet presentations
+- Gesture navigation
 
 ### tvOS
 - Preview support
@@ -252,11 +224,10 @@ NodeRenderer:
 ```
 
 ### Missing Modals
-- Project creation
+- Project creation dialog
 - Save/Open dialogs
 - Export options
 - Settings/Preferences
-- Character/Location sheets (UI exists, not connected)
 
 ## Data Flow
 
@@ -273,8 +244,8 @@ ContentView:
   config.selectSection = { section in
     switch section {
       case .storyFiles: selectedCenterButton = 0
-      case .characters: selectedCenterButton = 2
-      // etc.
+      case .characters: selectedCenterButton = 1
+      case .index: selectedCenterButton = 2
     }
   }
 ```
@@ -282,22 +253,23 @@ ContentView:
 ### Panel Isolation
 
 Each panel maintains independent state:
-- No shared data between panels
-- ProjectManager created but unused
-- Local state not persisted
+- WriterState/WriterDocument for writing
+- Character data models (future)
+- Index card storage (future)
 
 ## Accessibility
 
 ### Implemented
-- `.help()` tooltips on some buttons
+- `.help()` tooltips on buttons
 - Semantic colors
 - Standard SwiftUI accessibility
 - Focus indicators (partial)
+- Adjustable font sizes (11-24pt)
 
 ### Missing
-- VoiceOver labels
-- Keyboard navigation
-- Tab order
+- Complete VoiceOver labels
+- Full keyboard navigation
+- Tab order definition
 - Skip links
 - Role definitions
 
@@ -306,14 +278,14 @@ Each panel maintains independent state:
 ### Current Metrics
 - Panel switch: < 50ms
 - Inspector toggle: Animated ~350ms
-- Node drag: 60fps up to 100 nodes
+- Text editing: Native performance
 - File browser: Instant for < 100 items
 
 ### Bottlenecks
-- No virtualization (all nodes rendered)
 - File browser reloads entire tree
 - No lazy loading
 - Synchronous file operations
+- No virtualization for large documents
 
 ## Working Features
 
@@ -322,20 +294,21 @@ Each panel maintains independent state:
 | Panel switching | ✅ | Via toolbar buttons |
 | Inspector toggle | ✅ | Animated, persistent |
 | File browsing | ✅ | Tree view with actions |
-| Node placement | ✅ | Interactive with confirm |
-| Canvas navigation | ✅ | Pan, zoom, grid |
-| Gesture handling | ✅ | Platform-aware |
+| Text editing | ✅ | With font controls |
+| Auto-save timer | ✅ | 2-second delay |
+| Dirty state tracking | ✅ | In WriterDocument |
 | Animations | ✅ | Consistent springs |
 
 ## Missing Features
 
 | Feature | Priority | Blocked By |
 |---------|----------|------------|
-| Document opening | High | WriterDocument missing |
-| Node connections | High | 30% remaining work |
-| Data persistence | High | Architecture decision |
+| File opening | High | Browser-editor connection |
+| Save UI | High | No trigger in toolbar |
+| Character persistence | High | Data model needed |
+| Index card CRUD | High | Data model needed |
 | Undo/redo | Medium | Command pattern needed |
-| Keyboard shortcuts | Medium | Not started |
+| Export | Medium | Not started |
 | Search | Low | UI not designed |
 | Settings | Low | No preferences system |
 
@@ -348,17 +321,17 @@ Each panel maintains independent state:
 - **Platform Adaptive**: Conditional compilation
 
 ### Future Considerations
-- Coordinator pattern for complex flows
 - Deep linking support
 - State restoration
 - Navigation history
+- Keyboard shortcuts
 
 ## Known Issues
 
-1. **WriterDocument Missing**: Referenced but doesn't exist
-2. **Duplicate State**: ProjectManager created twice
-3. **File Opening**: Browser can't open files in editor
-4. **Panel Coordination**: No data sharing between panels
+1. **File Opening**: Browser can't open files in editor
+2. **Save UI Missing**: No button to trigger saves
+3. **Panel Coordination**: Limited data sharing
+4. **File Browser Redundancy**: 3 implementations exist
 5. **Navigation History**: No back/forward support
 
 ## Best Practices

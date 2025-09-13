@@ -29,7 +29,7 @@ StoryWriter implements a sophisticated **glass-morphism design system** with con
 Color.secondary.opacity(0.05)  // Subtle tints
 ```
 
-### Canvas Background
+### Application Background
 ```swift
 // Dark Mode
 LinearGradient(
@@ -46,33 +46,19 @@ LinearGradient(
 )
 ```
 
-### Node Type Colors
+### Content Type Colors
 ```swift
-// Story Category (Blue/Purple)
-.character: .blue
-.dialogue: .purple
-.cutscene: .indigo
-.choice: .pink
+// Writing Elements
+.chapter: .blue
+.scene: .purple
+.character: .green
+.note: .yellow
 
-// World Category (Green)
-.location: .green
-.region: .mint
-.landmark: .teal
-
-// Gameplay Category (Orange/Red)
-.quest: .orange
-.objective: .yellow
-.combat: .red
-.puzzle: .cyan
-.item: .yellow
-.weapon: .red
-.keyItem: .orange
-
-// System Category (Gray)
-.trigger: .gray
-.condition: .brown
-.variable: .secondary
-.event: .primary
+// Index Cards
+.plot: .orange
+.subplot: .pink
+.theme: .indigo
+.idea: .cyan
 ```
 
 ## Typography
@@ -92,6 +78,11 @@ Small: 11pt
 .semibold  // Headers, emphasis
 .regular   // Body text
 .medium    // Icons
+
+// Writer-specific
+Editor: 11-24pt (user adjustable)
+Line Numbers: 11pt monospaced
+Status Bar: 12pt regular
 ```
 
 ### Platform Typography
@@ -145,65 +136,87 @@ FloatingPanelStyle:
   padding: 20pt margins
 ```
 
-## Node Visual System
+## Writer Visual System
 
-### Node States & Opacity
+### Editor States
 ```swift
-// Background opacity by state
-Normal:    0.85 (dark) / 0.8 (light)
-Hovered:   0.9
-Selected:  0.85
-Dragging:  0.95
+// Background
+.regularMaterial for editor area
+Line highlight: .primary.opacity(0.05)
 
-// Border width by state
-Normal:    1.0pt
-Hovered:   1.5pt
-Selected:  2.5pt
-Dragging:  2.5pt
+// Line Numbers
+Color: .secondary
+Font: .system(.caption, design: .monospaced)
+Padding: 8pt from text
 ```
 
-### Node Shadows
+### Status Bar
 ```swift
-// Shadow radius by state
-Normal:    5pt
-Hovered:   8pt
-Selected:  10pt
-Dragging:  15pt
-
-// Shadow Y offset
-Normal:    2pt
-Hovered:   4pt
-Dragging:  8pt
-
-// Shadow color
-Type color with opacity (0.2-0.4)
+Height: 24pt
+Background: .ultraThinMaterial
+Border: top 1pt, .primary.opacity(0.08)
+Font: 12pt regular
+Spacing: 16pt between items
 ```
 
-### Node Scaling
+### Font Size Controls
 ```swift
-// Scale effect by state
-Normal:    1.0
-Hovered:   1.03
-Dragging:  1.08
+Range: 11-24pt
+Increment: 1pt
+Buttons: +/- with .secondary color
+Display: Current size badge
 ```
 
-### Display Modes
+## Character Sheet Visual
+
+### Layout Modes
 ```swift
-Compact Mode:
-  - Solid color background
-  - 33pt icon
-  - 8pt padding
-  - No content preview
+// Wide (>700pt)
+Side-by-side sections
+Fixed 350pt sidebar
 
-Normal Mode:
-  - Glass effect + color
-  - 14-18pt icons
-  - 12/14pt padding
-  - Shows header & tags
+// Narrow (≤700pt)
+Tab-based navigation
+Full-width sections
+```
 
-Expanded Mode:
-  - Same as normal
-  - Full content visible
+### Form Styling
+```swift
+TextField:
+  .textFieldStyle(.roundedBorder)
+  padding: 8pt
+  
+TextEditor:
+  .background(Color.secondary.opacity(0.05))
+  .cornerRadius(8)
+  minHeight: 100pt
+```
+
+## Index Card Visual
+
+### Card Layout
+```swift
+minWidth: 220pt
+idealWidth: 250pt
+height: 350pt
+padding: 16pt
+cornerRadius: 12pt
+background: .regularMaterial
+shadow: radius 8pt, y: 4pt
+```
+
+### Grid System
+```swift
+columns: floor(width / minWidth)
+spacing: 20pt
+animation: .spring() on resize
+```
+
+### Card States
+```swift
+Normal: scale(1.0), shadow(8pt)
+Hover: scale(1.02), shadow(12pt)
+Selected: border(2pt, .accentColor)
 ```
 
 ## Spacing System
@@ -215,7 +228,7 @@ Expanded Mode:
 8pt   - Standard inline spacing
 10pt  - Header vertical padding
 12pt  - Row horizontal padding
-14pt  - Node internal padding
+14pt  - Internal padding
 16pt  - Standard content padding
 20pt  - Panel margins
 ```
@@ -239,7 +252,7 @@ More generous spacing
 // Panel transitions
 .spring(response: 0.35, dampingFraction: 0.85)
 
-// Node interactions
+// Card interactions
 .spring(response: 0.3, dampingFraction: 0.8)
 
 // Quick feedback
@@ -255,19 +268,19 @@ More generous spacing
 ### Animation Triggers
 - Panel switching
 - Inspector toggle
-- Node selection/hover
-- Drag operations
+- Card selection/hover
 - Button presses
-- Zoom snapping
+- Font size changes
+- Save indicator
 
 ## Material Hierarchy
 
 ### Z-Layers (Back to Front)
 ```
-1. Canvas gradient background
-2. Grid overlay (optional)
-3. Edge connections
-4. Nodes with glass effect
+1. Application gradient background
+2. Main content area
+3. Editor/text areas
+4. Index cards
 5. Floating panels (.regularMaterial)
 6. Toolbars (.ultraThinMaterial)
 7. Popovers/Sheets
@@ -279,13 +292,14 @@ More generous spacing
 .ultraThinMaterial:
   - Toolbars
   - Buttons
-  - Node badges
+  - Status bars
   - Labels
 
 .regularMaterial:
   - Floating panels
   - Inspector
   - Main content areas
+  - Index cards
 
 .thinMaterial:
   - Dividers
@@ -309,10 +323,10 @@ More generous spacing
 ### Icon Categories
 ```swift
 // Navigation
-sidebar.right, folder.fill, plus.circle
+square.and.pencil, person.crop.square, square.grid.3x3
 
-// Node Types (19 icons)
-person.fill, map.fill, flag.fill, etc.
+// Writing Tools
+textformat.size, number, doc.text.fill
 
 // Actions
 checkmark, xmark, trash, arrow.clockwise
@@ -326,10 +340,11 @@ doc.text.fill, folder.fill
 ### macOS Specific
 ```swift
 - Hover states on all interactive elements
-- Cursor changes (resize, arrow)
+- Cursor changes (text, resize)
 - Delete on hover
 - Tighter spacing
 - 320pt inspector
+- Keyboard shortcuts prominent
 ```
 
 ### iOS Specific
@@ -339,6 +354,7 @@ doc.text.fill, folder.fill
 - Glass button style for menus
 - Haptic feedback ready
 - 280pt inspector
+- Gesture-based interactions
 ```
 
 ### tvOS Specific
@@ -355,14 +371,14 @@ doc.text.fill, folder.fill
 ```swift
 16pt - Panels (continuous)
 14pt - Toolbars (continuous)
+12pt - Index cards (continuous)
 10pt - Buttons (continuous)
-8-16pt - Nodes (by type, continuous)
-6pt - Small elements (continuous)
+8pt  - Text fields (continuous)
+6pt  - Small elements (continuous)
 ```
 
 ### Opacity Values
 ```swift
-0.95 - Maximum opacity (dragging)
 0.9  - Hover states
 0.85 - Normal dark mode
 0.8  - Normal light mode
@@ -376,7 +392,7 @@ doc.text.fill, folder.fill
 ```swift
 // Standard shadows
 Panels:  20pt radius, 0.15 opacity, 8pt Y
-Nodes:   5-15pt radius, 0.12-0.4 opacity, 2-8pt Y
+Cards:   8pt radius, 0.12 opacity, 4pt Y
 Buttons: 4pt radius, 0.15 opacity, 2pt Y
 
 // No shadows on
@@ -396,6 +412,10 @@ spacing: 20pt
 Draggable divider
 minSectionHeight: 100pt
 50/50 default split
+
+// Writer
+Font size: 11-24pt adaptive
+Line numbers: toggle visibility
 ```
 
 ### Breakpoints
@@ -416,19 +436,20 @@ Content adapts internally
 - `.help()` tooltips on buttons
 - Standard SwiftUI accessibility
 - Sufficient contrast ratios
+- Adjustable font sizes (11-24pt)
 
 ### Planned
 - Dynamic Type support
 - Reduced motion alternatives
 - High contrast mode
 - VoiceOver optimization
+- Keyboard navigation complete
 
 ## Design Tokens
 
 ### Reusable Styles
 ```swift
 GlassButtonStyle()       // All buttons
-NodeStyle()              // All nodes
 FloatingPanelStyle()     // All panels
 ToolbarStyle.platform    // All toolbars
 ```
@@ -454,6 +475,7 @@ ToolbarStyle.platform    // All toolbars
 - Error states
 - Success feedback
 - Skeleton screens
+- Save indicators
 
 ## Performance Considerations
 
@@ -468,3 +490,4 @@ ToolbarStyle.platform    // All toolbars
 - < 16ms render time
 - Smooth state transitions
 - No visual glitches
+- Fast text rendering

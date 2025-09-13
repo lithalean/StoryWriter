@@ -1,24 +1,24 @@
 # StoryWriter Context Engineering Manifest
 
-**System Version**: 2.0.0  
+**System Version**: 3.0.0  
 **Last Updated**: 2025-01-08  
-**Project State**: Active Development (Post-Prototype)
+**Project State**: Active Development (Post-Refactor)
 **Creator**: Tyler Allen
-**Initial Sprint**: 8/26/25 (4-6 hours)
-**Current Status**: ~30% Complete, Architecture Stable
+**Initial Sprint**: 8/26/24 (4-6 hours)
+**Major Refactor**: January 2025 (StoryMapper separation)
+**Current Status**: ~40% Complete, Architecture Stable
 
 ## Module Status
 
 | Module | Version | Status | Completeness | Health |
 |--------|---------|--------|--------------|--------|
-| ARCHITECTURE | 2.0.0 | ✅ Active | 95% | Good - Behavior-contract pattern complete |
-| IMPLEMENTATION | 2.0.0 | 🔄 Active | 30% | Major - Critical components missing |
-| VISUAL | 2.0.0 | ✅ Active | 90% | Good - Glass-morphism system complete |
-| NAVIGATION | 2.0.0 | ✅ Active | 75% | Good - Single-window architecture working |
-| INTEGRATION | 1.0.0 | 📋 Planned | 5% | Future - Mostly specifications |
-| EVOLUTION | 2.0.0 | ✅ Active | N/A | Good - Comprehensive history |
-| NODE | 1.0.0 | ✅ Active | 80% | Good - 19 types, connections 70% |
-| TOOLBAR | 1.0.0 | ✅ Active | 100% | Excellent - Pattern complete |
+| ARCHITECTURE | 3.0.0 | ✅ Active | 95% | Good - Behavior-contract pattern complete |
+| IMPLEMENTATION | 3.0.0 | 🔄 Active | 40% | Improving - WriterDocument exists |
+| VISUAL | 3.0.0 | ✅ Active | 90% | Good - Glass-morphism system complete |
+| NAVIGATION | 3.0.0 | ✅ Active | 75% | Good - 3-panel architecture working |
+| INTEGRATION | 2.0.0 | 📋 Active | 15% | YAML configuration complete |
+| EVOLUTION | 3.0.0 | ✅ Active | N/A | Good - January 2025 refactor documented |
+| TOOLBAR | 2.0.0 | ✅ Active | 100% | Excellent - Pattern complete |
 | MARKDOWNUI | 1.0.0 | ⏳ Ready | 100% | Strategic - Future use in 3 projects |
 
 ## Module Dependencies
@@ -26,33 +26,33 @@
 ```yaml
 ARCHITECTURE:
   depends_on: []
-  informs: [IMPLEMENTATION, VISUAL, NAVIGATION, NODE, TOOLBAR]
+  informs: [IMPLEMENTATION, VISUAL, NAVIGATION, TOOLBAR]
   pattern: behavior-contract
+  status: Updated for writer focus
   
 IMPLEMENTATION:
   depends_on: [ARCHITECTURE]
   tracks: [project_files, completion_status]
-  critical_missing: [WriterDocument]
+  critical_resolved: [WriterDocument now exists]
+  critical_remaining: [File browser consolidation]
   
 VISUAL:
   depends_on: [ARCHITECTURE]
   defines: [ui_components, design_system]
   status: glass-morphism complete
+  removed: [node visual system]
   
 NAVIGATION:
   depends_on: [VISUAL, ARCHITECTURE]
   maps: [user_flows, screen_states]
   pattern: single-window-panel-switching
-  
-NODE:
-  depends_on: [VISUAL, ARCHITECTURE]
-  features: [19_types, placement, dragging]
-  incomplete: [connections_30%, persistence]
+  panels: [Writer, Character, Index]
   
 TOOLBAR:
   depends_on: [ARCHITECTURE]
   exemplifies: behavior-contract
   status: production-ready
+  removed: [MapperToolbar]
   
 MARKDOWNUI:
   depends_on: []
@@ -63,106 +63,111 @@ MARKDOWNUI:
   
 INTEGRATION:
   depends_on: [IMPLEMENTATION]
-  manages: [external_apis, dependencies]
-  status: mostly_planned
+  format: YAML
+  manages: [external_apis, dependencies, known_issues]
+  status: comprehensive_configuration
   
 EVOLUTION:
   depends_on: [all_modules]
   records: [decisions, changes, technical_debt]
+  latest: January 2025 refactor
 ```
 
 ## Quick Load Commands
 
 ```bash
-# For current mapper work (YOUR FOCUS)
-Load: IMPLEMENTATION + NODE + MapperWindow sections
-
-# For upcoming writer integration
+# For writer work (CURRENT FOCUS)
 Load: IMPLEMENTATION + MARKDOWNUI + WriterWindow
+
+# For file browser consolidation
+Load: IMPLEMENTATION + Core/File* sections
 
 # For architecture review
 Load: ARCHITECTURE + TOOLBAR + EVOLUTION
 
 # For visual polish
-Load: VISUAL + NODE styling sections
+Load: VISUAL + Character/Index sections
 
-# For understanding issues
-Load: EVOLUTION + IMPLEMENTATION status
+# For understanding current state
+Load: EVOLUTION + INTEGRATION (known_issues)
 ```
 
 ## Project Overview
 
-**StoryWriter** is a comprehensive markdown-based writing application for macOS/iOS that combines:
-- Advanced markdown editing with custom MarkdownUI implementation (ready to integrate)
-- Visual story mapping with node-based canvas (90% complete)
-- Character and story element management (UI only)
-- Project organization with file browser (50% functional)
-- Index card system for story planning (UI only)
+**StoryWriter** is a focused markdown-based writing application for macOS/iOS that provides:
+- Text editing with font controls (TextEditor currently)
+- Advanced markdown system ready to integrate (97 MarkdownUI files)
+- Character management interface (UI complete, no persistence)
+- Index card system for story planning (UI complete, no persistence)
+- Project organization with file browser (browse only, can't open files)
+
+**Note**: Mapper functionality moved to separate StoryMapper application in January 2025
 
 ## Actual Component Status
 
 ### ✅ Working Components
-- **Mapper System** (90%): Nodes work, connections 70%, no persistence
+- **Writer Core** (40%): TextEditor, WriterDocument, WriterState, auto-save timer
 - **Toolbar System** (100%): Perfect behavior-contract implementation
 - **Project Manager** (100%): JSON save/load functional
-- **File Browser** (50%): Browse works, can't open files
-- **Visual Design** (90%): Complete glass-morphism system
+- **Panel Navigation** (90%): 3-panel switching works perfectly
 
 ### 🔄 Partially Working
-- **Writer** (20%): TextEditor only, MarkdownUI ready but not integrated
-- **Node Connections** (70%): In progress
-- **Panel Coordination** (40%): Panels work but disconnected
+- **File Browser** (50%): Browse works, can't open files, 3 redundant implementations
+- **Writer UI** (60%): Font controls, line numbers, word count all work
+- **Panel Coordination** (40%): Panels work but limited data sharing
 
 ### 🎨 UI Complete (No Backend)
-- **Character Sheet** (15%): Full UI, no data persistence
+- **Character Sheet** (15%): Full UI, no data model
 - **Index Cards** (10%): Static grid only
-- **Timeline** (0%): Directory exists, nothing implemented
+- **Timeline** (0%): Empty directory
 - **Outline Panel** (0%): Placeholder in ContentView
 
 ### ⚠️ Critical Issues
-- **WriterDocument.swift**: Referenced everywhere but DOESN'T EXIST
+- **No Save UI**: Backend works but no button to trigger saves
 - **Three File Browsers**: Confusing redundancy (FileSystem, FileBrowser, FileSystemModel)
-- **No Save UI**: Projects can save but no UI to trigger it
+- **Can't Open Files**: File browser doesn't connect to writer
 - **No Undo/Redo**: Critical for any editor
+- **Location Directory**: Still present (should be removed - mapper leftover)
 
 ## Active Development Areas
 
-### Current Sprint Focus
-1. **Complete Mapper Connections** (30% remaining)
-2. **Add Node Persistence** to project files
-3. **Create WriterDocument** model
-
-### Next Phase (Post-Mapper)
+### Immediate Focus
 1. **Integrate MarkdownUI** into Writer
 2. **Consolidate File Browsers** to single implementation
-3. **Connect Panels** through ProjectManager
-4. **Implement Auto-save**
+3. **Add Save UI** trigger in toolbar
+4. **Connect File Browser** to WriterDocument
+
+### Next Phase
+1. **Character Data Model** and persistence
+2. **Index Card CRUD** operations
+3. **Implement Undo/Redo**
+4. **Export Functionality** (PDF, HTML, DOCX)
 
 ## Technical Debt Priority
 
 ### 🔴 Critical (Blocks Usage)
-- WriterDocument.swift missing
-- No save functionality in UI
-- Node data not persisted
+- No save UI trigger
+- File browser can't open files
+- Location/ directory present (oversight)
 
 ### 🟡 Major (Limits Features)
 - Three file browser implementations
-- Disconnected panels
-- No document model
-- Missing data flow
+- MarkdownUI not integrated (97 files waiting)
+- Character/Index no persistence
+- No undo/redo system
 
 ### 🟢 Minor (Can Wait)
-- 97 MarkdownUI files (strategic investment, not debt)
-- Unused SwiftData scaffolding
-- Empty Timeline/Outline views
+- Timeline directory empty
+- Outline panel placeholder
+- Platform inconsistencies
 
 ## Module Loading Priority
 
-1. **Always load MANIFEST first** (this file)
-2. **For current work**: Load NODE + relevant MapperWindow sections
+1. **Always load MANIFEST first** (this file - now updated)
+2. **For writer work**: Load IMPLEMENTATION + MARKDOWNUI
 3. **For architecture**: Load ARCHITECTURE + TOOLBAR (best examples)
-4. **For issues**: Load EVOLUTION (comprehensive history)
-5. **For future**: Load MARKDOWNUI specs when ready to integrate
+4. **For history**: Load EVOLUTION (includes January 2025 refactor)
+5. **For issues**: Load INTEGRATION yaml (known_issues section)
 
 ## Health Indicators
 
@@ -171,60 +176,85 @@ Load: EVOLUTION + IMPLEMENTATION status
 - 🎨 **UI Only**: Visual complete, needs backend
 - ⏳ **Ready**: Complete but waiting for integration
 - ⚠️ **Critical**: Module needs immediate attention
-- 📋 **Planned**: Specification only
+- 📋 **Active**: Specification/configuration in use
 
 ## Performance Metrics
 
-- **Node Rendering**: 60fps up to ~100 nodes (500 target)
+- **Text Editing**: Native TextEditor performance
 - **Panel Switching**: < 50ms
 - **File Operations**: Synchronous (needs async)
-- **Memory**: ~45MB baseline, ~78MB with 500 nodes
+- **Memory**: ~35MB baseline (reduced after mapper removal)
+- **Bundle Size**: 163 files total, ~66 core + 97 MarkdownUI
 
 ## Time Investment
 
 ### Original Sprint (4-6 hours)
 - Foundation + MarkdownUI import: 2 hours
-- Mapper implementation: 2 hours
-- UI polish: 1-2 hours
+- Writer + Mapper implementation: 3 hours
+- UI polish: 1 hour
+
+### January 2025 Refactor
+- Separated StoryMapper: 16 files removed
+- Added WriterDocument/WriterState: 2 files
+- Documentation updates: In progress
 
 ### Estimated to Complete
-- Core stabilization: 2-4 hours
-- Writer integration: 4-6 hours
-- Full feature complete: 20-30 hours
+- MarkdownUI integration: 1 day
+- File browser consolidation: 1 day
+- Character/Index persistence: 2 days
+- Full feature complete: 5-7 days
+
+## File Statistics
+
+### Current State (Post-Refactor)
+- **Total Files**: 163
+- **Core Application**: ~66 files
+- **MarkdownUI Library**: 97 files
+- **Removed to StoryMapper**: 16 files
+
+### By Component
+- Writer: 7 files
+- Character: 1 file
+- Index: 2 files
+- Project: 4 files
+- Core: 3 files (should be 1)
+- MarkdownUI: 97 files
 
 ## Next Steps
 
-1. **Immediate** (You are here):
-   - Complete mapper connections
-   - Add node persistence
-   - Create WriterDocument
-
-2. **Short Term**:
+1. **Today's Priority**:
    - Integrate MarkdownUI
    - Consolidate file browsers
-   - Connect panels to data
+   - Add save button
+   - Remove Location directory
+
+2. **This Week**:
+   - Character data model
+   - Index card CRUD
+   - Connect file browser to writer
+   - Basic undo/redo
 
 3. **Strategic**:
-   - Consider XCFramework for MarkdownUI
-   - Plan SyntaxWriter/LocalLLM shared components
-   - Design plugin architecture
+   - Consider MarkdownUI XCFramework
+   - Plan export formats
+   - Design preferences system
 
 ## Success Metrics
 
-### Current Score: 3/10
-- ✅ Works: UI navigation, mapper visualization, basic typing
-- ❌ Doesn't: Save UI, load files, persist nodes, render markdown
+### Current Score: 4/10
+- ✅ Works: Text editing, font controls, panel navigation, project structure
+- ❌ Doesn't: Save UI, file opening, markdown rendering, data persistence
 
 ### Target Score: 7/10
-- Stable core with saves
 - MarkdownUI integrated
-- All panels connected
-- Data persistent
-- Clean architecture
+- All panels with persistence
+- Single file browser working
+- Save/load complete
+- Export functional
 
 ### Version 1.0 Definition
-- All panels functional with data
-- Document save/load working
-- Markdown rendering active
-- Node persistence complete
+- All panels functional with data models
+- MarkdownUI rendering active
+- Document save/load with UI
 - Single file browser implementation
+- Export to PDF/HTML minimum

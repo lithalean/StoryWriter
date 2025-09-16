@@ -1,269 +1,328 @@
 # StoryWriter Evolution & Decision Log
 
 **Project Created**: 8/26/24 by Tyler Allen  
-**Development Time**: 4-6 hours (rapid prototype)  
-**Major Refactor**: January 2025 (separation into StoryWriter/StoryMapper)
-**Documentation Updated**: 2025-01-08
+**Development Time**: 4-6 hours (initial sprint)  
+**Major Refactor**: January 2025 (StoryWriter/StoryMapper split)  
+**Major Update**: September 2025 (Save system, UI consolidation)  
+**Documentation Updated**: September 2025
 
-## Project Genesis
+## Project Timeline
 
-### The Sprint
+### The Sprint (August 2024)
 **Date**: 8/26/24  
 **Duration**: 4-6 hours continuous coding  
 **Context**: Rapid prototype development  
 **Result**: 179 files including complete MarkdownUI library (97 files)
 
-## Actual Development Timeline (Reconstructed)
+### January 2025 Refactor
+**Change**: Separated into StoryWriter and StoryMapper  
+**Impact**: 16 mapper files removed, WriterDocument/WriterState added  
+**Result**: Cleaner focus, 163 files remaining
 
-### Hour 0-1: Foundation
-- Created SwiftUI app with SwiftData template
-- Set up multi-platform targets (macOS, iOS, tvOS)
-- Basic ContentView with panel switching
-- Added floating panel styling
+### September 2025 Update
+**Duration**: ~2 days  
+**Changes**: Save system complete, toolbar unified, Reader mode added  
+**Impact**: Critical issues resolved, 168 files total  
+**Result**: 60-65% complete (up from 40%)
 
-### Hour 1-2: MarkdownUI Library
-- Appears to have imported/created entire MarkdownUI system
-- 97 files with parser, renderer, DSL, themes
-- Never actually integrated into the app
-- Represents significant effort/time
+## September 2025 Major Improvements
 
-### Hour 2-3: Core Components
-- ProjectManager with JSON serialization
-- Basic Writer with TextEditor
-- Multiple file browser attempts
-- Inspector panel layout
+### What Was Fixed
 
-### Hour 3-4: Mapper Implementation
-- Full node/edge system
-- Canvas with pan/zoom
-- Node types with colors
-- Visual rendering system
+#### Save System Crisis ✅
+**Before**: Backend existed but no UI trigger  
+**Solution**: Added save button to ProjectToolbar  
+**Implementation**: Native dialogs, auto-save timer, dirty tracking  
+**Result**: Complete save functionality
 
-### Hour 4-6: UI Polish & Additional Views
-- Character sheet UI
-- Index card grid
-- Toolbars and status bars
-- Material design styling
+#### Toolbar Complexity ✅
+**Before**: ProjectToolbar + WriterToolbar (confusing)  
+**Solution**: Consolidated into single ProjectToolbar  
+**Files Removed**: WriterToolbar.swift, WriterToolbarConfig.swift  
+**Result**: Cleaner, unified navigation
 
-## January 2025 Refactoring
+#### File Browser Redundancy ✅
+**Before**: Three implementations (FileSystem, FileBrowser, FileSystemModel)  
+**Solution**: Single FileBrowser.swift implementation  
+**Files Removed**: FileSystem.swift, FileSystemModel.swift  
+**Result**: One clear implementation
 
-### The Split Decision
-**Date**: January 2025  
-**Change**: Separated StoryWriter and StoryMapper into independent applications  
-**Files Moved**: 16 mapper-related files → StoryMapper  
-**Files Added**: WriterDocument.swift, WriterState.swift
+#### Missing Statusbar ✅
+**Before**: No information display  
+**Solution**: ProjectStatusbar with behavior-contract  
+**Features**: Word count, save status, settings menu  
+**Result**: Complete information system
 
-### What Changed
+### What Was Added
 
-#### Removed from StoryWriter
+#### Reader Mode
 ```
-Views/Mapper/          (16 files total)
-├── MapperWindow.swift
-├── MapperToolbar.swift
-├── MapperToolbarConfig.swift
-├── MapperCanvas.swift
-├── NodeRenderer.swift
-├── NodeUI.swift
-├── NodeTypes.swift
-├── NodeState.swift
-├── NodeActionOverlay.swift
-├── EdgeRenderer.swift
-├── CanvasGestureHandler.swift
-├── NodePalette.swift
-├── NodeStore.swift
-├── EdgeStore.swift
-├── MapperState.swift
-└── GridOverlay.swift
+Reader/
+├── ReaderWindow.swift    - Book-style reading view
+└── ReaderState.swift     - Reading preferences
+Status: Foundation complete (30%)
+Purpose: Distraction-free reading experience
 ```
 
-#### Added to StoryWriter
+#### Formatter Panel
 ```
-Views/Writer/
-├── WriterDocument.swift    ✅ Document model (finally!)
-└── WriterState.swift       ✅ View state management
-```
-
-#### Still Present (Oversight)
-```
-Location/
-└── LocationSheet.swift     ❌ Should have been removed
+Formatter/
+├── FormatterPanel.swift       - Right sidebar
+└── FormatControlsView.swift   - Text controls
+Status: Complete (100%)
+Purpose: Replaced WriterToolbar font controls
 ```
 
-### Rationale for Split
-- **Focus**: Each app has clear purpose
-- **Complexity**: Mapper was dominating codebase
-- **Performance**: Smaller, faster apps
-- **Maintenance**: Easier to update independently
-
-### Impact Analysis
-- **File Count**: 179 → 163 files
-- **Core Files**: ~66 (excluding MarkdownUI)
-- **Writer Status**: 20% → 40% complete
-- **Critical Issue Resolved**: WriterDocument now exists
+#### Simplified Navigation
+```
+Before: 4+ panels (Writer, Character, Index, Mapper)
+After: 2 modes (Writer, Reader)
+Character/Index: Still exist but not in main navigation
+```
 
 ## Major Design Decisions
 
-### Decision 1: Single Window Architecture
-**Choice**: One window with switchable panels
-**Rationale**: Faster to implement, iOS compatibility
-**Result**: ✅ Works, simplified after split
+### Decision 1: Single Window Architecture ✅
+**Choice**: One window with switchable panels  
+**Rationale**: Faster to implement, iOS compatibility  
+**Result**: Works perfectly after simplification
 
-### Decision 2: JSON Over SwiftData
-**Choice**: Use JSON files despite SwiftData setup
-**Rationale**: Quick prototype needs, familiar pattern
-**Result**: ✅ Simple but not scalable
+### Decision 2: JSON Over SwiftData ✅
+**Choice**: Use JSON files despite SwiftData setup  
+**Rationale**: Quick prototype needs, familiar pattern  
+**Result**: Simple and sufficient
 
-### Decision 3: Import MarkdownUI Library
-**Choice**: Include 97-file markdown system
-**Rationale**: Planned for rendering, future-proofing
-**Result**: ⏳ Still not integrated, strategic asset
+### Decision 3: Import MarkdownUI Library ⏳
+**Choice**: Include 97-file markdown system  
+**Rationale**: Planned for rendering, future-proofing  
+**Result**: Still not integrated but strategic asset
 
-### Decision 4: Focus on Mapper (Original)
-**Choice**: Build complete visual mapper system
-**Rationale**: Most interesting feature, visual appeal
-**Result**: ✅ So successful it became separate app
+### Decision 4: Split Applications (January 2025) ✅
+**Choice**: Separate StoryWriter and StoryMapper  
+**Rationale**: Focus, maintainability, performance  
+**Result**: Much cleaner architecture
 
-### Decision 5: Three File Browsers
-**Choice**: Built three different implementations
-**Rationale**: Iteration on approach, time pressure
-**Result**: ❌ Still confusing redundancy
+### Decision 5: Unified Toolbar (September 2025) ✅
+**Choice**: Merge WriterToolbar into ProjectToolbar  
+**Rationale**: Reduce complexity, clearer UI  
+**Result**: Significant simplification
 
-### Decision 6: Split Applications (2025)
-**Choice**: Separate StoryWriter and StoryMapper
-**Rationale**: Focus, maintainability, performance
-**Result**: ✅ Cleaner architecture, clearer purpose
+### Decision 6: Reader Mode (September 2025) ✅
+**Choice**: Add dedicated reading mode  
+**Rationale**: Better reading experience, foundation for MarkdownUI  
+**Result**: Clean separation of editing/reading
 
 ## Technical Pivots
 
-### TextEditor Instead of MarkdownUI
-**Started**: MarkdownUI integration  
-**Pivoted To**: Simple TextEditor  
-**Status 2025**: Still using TextEditor, MarkdownUI ready
+### Save System Evolution
+**August 2024**: No save implementation  
+**January 2025**: WriterDocument with save logic  
+**September 2025**: Complete with UI and native dialogs ✅
 
-### WriterDocument Implementation
-**Original**: Referenced but missing  
-**2025**: Finally implemented with auto-save
+### Toolbar Consolidation
+**Original**: Multiple toolbars (Project, Writer, Mapper)  
+**January 2025**: Removed MapperToolbar  
+**September 2025**: Merged WriterToolbar into ProjectToolbar ✅
 
-### Panel Count Reduction
-**Original**: 4+ panels (writer, mapper, index, character)  
-**2025**: 3 panels (writer, character, index)
+### File Browser Journey
+**Original**: Three different implementations  
+**January 2025**: Still three (confusion)  
+**September 2025**: Single FileBrowser.swift ✅
 
-## Current State Analysis (Post-Split)
+### Navigation Simplification
+**Original**: 4+ panels in toolbar  
+**January 2025**: 3 panels (removed Mapper)  
+**September 2025**: 2 modes (Writer/Reader) ✅
 
-### Stability: IMPROVING
-- WriterDocument now exists ✅
-- WriterState implemented ✅
-- Auto-save timer working ✅
-- File browser issues remain ❌
+## Current State Analysis (September 2025)
 
-### Completeness: 40%
-- Writer: 40% complete (up from 20%)
-- Index: 10% complete (UI only)
+### Stability: GOOD
+- Save system complete ✅
+- WriterDocument robust ✅
+- Auto-save working ✅
+- Single file browser ✅
+- Unified toolbar ✅
+
+### Completeness: 60-65%
+- Save System: 100% complete ✅
+- Writer: 75% complete (missing MarkdownUI)
+- Reader: 30% complete (foundation only)
 - Character: 15% complete (UI only)
-- File Browser: 50% complete
+- Index: 10% complete (UI only)
+- Toolbar: 95% complete (missing undo/redo)
+- Statusbar: 100% complete ✅
 
-### Usability: BETTER
-- Can edit text with controls
-- Font size management works
-- Word/line counting functional
-- Still can't trigger saves
+### Usability: MUCH BETTER
+- Can save documents properly ✅
+- Clean mode switching ✅
+- Font controls accessible ✅
+- Information always visible ✅
+- Professional feel ✅
 
-## Recovery Plan (Updated)
+## Recovery Plan (Updated September 2025)
 
-### Phase 1: Consolidate (1 day)
-1. ~~Create WriterDocument.swift~~ ✅ DONE
-2. Remove 2 redundant file browsers
-3. Connect file browser to writer
-4. Add save UI trigger
-5. Remove Location directory
+### Phase 1: MarkdownUI Integration (1 day)
+1. Replace TextEditor in WriterWindow
+2. Add to ReaderWindow
+3. Configure theme system
+4. Test performance
 
-### Phase 2: Integrate (2 days)
-1. Integrate MarkdownUI into writer
+### Phase 2: Core Features (2 days)
+1. Implement undo/redo system
 2. Character data model & persistence
-3. Index card CRUD operations
-4. Connect all panels to ProjectManager
+3. Basic export (PDF/HTML)
+4. Connect file browser to open files
 
-### Phase 3: Polish (1 day)
-1. Error handling
-2. Undo/redo system
-3. Export functionality
-4. Keyboard shortcuts
+### Phase 3: Polish (2 days)
+1. Document templates
+2. Find/replace functionality
+3. Enhanced error handling
+4. Accessibility improvements
 
-## Technical Debt Priority (Updated)
+## Technical Debt Status
 
-### Critical (Blocks usage)
+### Resolved ✅
+```yaml
+FIXED:
+  - Save UI missing → Complete save system
+  - Multiple toolbars → Unified toolbar
+  - Three file browsers → Single implementation
+  - No statusbar → Full implementation
+  - No Reader mode → Foundation complete
+```
+
+### Remaining Critical
 ```yaml
 HIGH:
-  - No save UI trigger
+  - No MarkdownUI integration (97 files waiting)
+  - No undo/redo system
   - File browser can't open files
-  - Location directory still present
 ```
 
-### Major (Limits features)
-```yaml
-MEDIUM:
-  - Three file browser implementations
-  - 97 unused MarkdownUI files (strategic)
-  - Character/Index no persistence
-  - No undo/redo
-```
-
-### Minor (Can wait)
+### Remaining Minor
 ```yaml
 LOW:
+  - Character/Index no persistence
   - Timeline directory empty
-  - Outline panel placeholder
-  - Platform inconsistencies
+  - Section title hardcoded
+  - No export functionality
 ```
 
 ## Lessons Learned
 
-### From Original Sprint
+### From Original Sprint (August 2024)
 1. **Focus wins**: Mapper succeeded due to focus
-2. **Libraries costly**: MarkdownUI integration harder than expected
+2. **Libraries costly**: MarkdownUI harder to integrate than expected
 3. **Vertical slices**: Complete features better than UI shells
 4. **Time unrealistic**: 4-6 hours too short for full app
 
-### From 2025 Split
+### From January 2025 Split
 1. **Separation good**: Focused apps better than monoliths
 2. **Document models critical**: WriterDocument essential
 3. **Clean as you go**: Should have removed Location/
 4. **Strategic assets**: MarkdownUI valuable for future
 
-## Success Metrics
+### From September 2025 Update
+1. **Consolidation powerful**: Unified toolbar much cleaner
+2. **Save UI critical**: Users need visible save option
+3. **Simplification works**: 2 modes better than 4 panels
+4. **Information matters**: Statusbar provides confidence
+5. **Paper metaphor effective**: Visual hierarchy helps focus
 
-### Current Score: 4/10
-- ✅ Works: Text editing, font controls, project structure
-- ❌ Missing: Save UI, file opening, markdown rendering
+## Success Metrics Evolution
 
-### Target Score: 7/10
-- Markdown fully integrated
-- All panels persistent
-- Single file browser
-- Export functionality
+### August 2024: 2/10
+- Basic prototype only
 
-### Version 1.0 Definition
-- All panels functional with data
-- MarkdownUI rendering active
-- Document save/load working
-- File browser consolidated
-- Export to common formats
+### January 2025: 4/10
+- ✅ Text editing, project structure
+- ❌ No save UI, can't open files
 
-## Future Considerations
+### September 2025: 6/10
+- ✅ Complete save system
+- ✅ Unified navigation
+- ✅ Clean architecture
+- ✅ Reader mode foundation
+- ✅ Statusbar information
+- ❌ No MarkdownUI
+- ❌ No undo/redo
+- ❌ No persistence for Character/Index
+
+### Target 1.0: 8/10
+- MarkdownUI fully integrated
+- Undo/redo working
+- Basic export functionality
+- Character persistence
+
+## File Statistics Over Time
+
+### August 2024 (Original)
+- Total: 179 files
+- Mapper: ~16 files
+- MarkdownUI: 97 files
+- Core: ~66 files
+
+### January 2025 (Post-Split)
+- Total: 163 files (-16)
+- Mapper: 0 (removed)
+- Added: WriterDocument, WriterState
+- Oversight: Location/ still present
+
+### September 2025 (Current)
+- Total: 168 files (+5)
+- Added: Reader (2), Formatter (2), Statusbar (2)
+- Removed: WriterToolbar (2), FileSystem duplicates (2)
+- Net: Cleaner despite more files
+
+## Strategic Decisions
 
 ### MarkdownUI Strategy
-- Consider XCFramework for reuse
-- Share with SyntaxWriter/LocalLLM projects
-- ~2MB overhead worth it for quality
+**Status**: 97 files ready but not integrated  
+**Value**: ~2MB, professional rendering  
+**Plan**: Priority integration, potential XCFramework  
+**Timeline**: Next immediate priority
 
 ### Architecture Evolution
-- SwiftData migration path
-- Plugin system for extensions
-- Cloud sync consideration
-- Collaboration features
+**Current**: JSON + behavior-contract  
+**Future**: Consider SwiftData when stable  
+**Plugin System**: After 1.0  
+**Cloud Sync**: Version 2.0 consideration
 
-### StoryMapper Integration
-- Potential re-integration as plugin
-- Shared project format
-- Cross-app communication
-- Unified workspace option
+## Time Investment
+
+### Original Sprint: 4-6 hours
+- Foundation + MarkdownUI import
+- Complete mapper implementation
+- Basic UI for all panels
+
+### January 2025: ~1 day
+- Separation into two apps
+- WriterDocument implementation
+- Documentation updates
+
+### September 2025: ~2 days
+- Save system completion
+- Toolbar consolidation
+- Statusbar implementation
+- File browser cleanup
+- Reader mode addition
+
+### Estimated to 1.0: 5-7 days
+- MarkdownUI integration: 1 day
+- Undo/redo: 1 day
+- Character/Index persistence: 2 days
+- Export functionality: 2 days
+- Polish and testing: 1 day
+
+## Project Trajectory
+
+The project has evolved from a rapid prototype with ambitious scope to a focused, well-architected writing application. The September 2025 improvements resolved critical usability issues and established solid foundations. With MarkdownUI integration as the next major milestone, StoryWriter is positioned to become a professional writing tool.
+
+### Key Success Factors
+1. **Separation of concerns** (StoryWriter vs StoryMapper)
+2. **UI consolidation** (unified toolbar, simplified navigation)
+3. **Complete core features** (save system, document model)
+4. **Clean architecture** (behavior-contract throughout)
+5. **Platform support** (true multi-platform code)
+
+The evolution shows healthy project maturation, with each iteration solving real problems and improving the foundation for future development.

@@ -3,6 +3,7 @@ lithalean@Mac StoryWriter % tree
 .
 ├── StoryWriter
 │   ├── App
+│   │   ├── AppBackground.swift
 │   │   ├── Assets.xcassets
 │   │   │   ├── AccentColor.colorset
 │   │   │   │   └── Contents.json
@@ -13,9 +14,14 @@ lithalean@Mac StoryWriter % tree
 │   │   ├── Item.swift
 │   │   └── StoryWriterApp.swift
 │   ├── Core
+│   │   ├── CanvasBackground.swift
 │   │   ├── FileBrowser.swift
-│   │   ├── FileSystem.swift
-│   │   └── FileSystemModel.swift
+│   │   ├── FileSystemModel.swift
+│   │   ├── MarkdownReader.swift
+│   │   └── MarkdownWriter.swift
+│   ├── Formatter
+│   │   ├── FormatControlsView.swift
+│   │   └── FormatterPanel.swift
 │   ├── Info.plist
 │   ├── Inspector
 │   │   ├── InspectorPanel.swift
@@ -24,7 +30,8 @@ lithalean@Mac StoryWriter % tree
 │   ├── Location
 │   │   └── LocationSheet.swift
 │   ├── Managers
-│   │   └── ProjectManager.swift
+│   │   ├── ProjectManager.swift
+│   │   └── StatefulPreviewWrapper.swift
 │   ├── MarkdownUI
 │   │   ├── DSL
 │   │   │   ├── Blocks
@@ -167,8 +174,13 @@ lithalean@Mac StoryWriter % tree
 │   ├── Project
 │   │   ├── ProjectBrowser.swift
 │   │   ├── ProjectState.swift
+│   │   ├── ProjectStatusbar.swift
+│   │   ├── ProjectStatusbarConfig.swift
 │   │   ├── ProjectToolbar.swift
 │   │   └── ProjectToolbarConfig.swift
+│   ├── Reader
+│   │   ├── ReaderState.swift
+│   │   └── ReaderWindow.swift
 │   ├── Sources
 │   │   └── Shared
 │   │       ├── Extensions
@@ -177,23 +189,17 @@ lithalean@Mac StoryWriter % tree
 │   │       ├── GlassButtonStyle.swift
 │   │       ├── PlatformColor.swift
 │   │       └── ToolbarStyle.swift
-│   └── Views
-│       ├── Chapter
-│       ├── Character
-│       │   └── CharacterSheet.swift
-│       ├── Index
-│       │   ├── IndexCard.swift
-│       │   └── IndexWindow.swift
-│       ├── StatefulPreviewWrapper.swift
-│       ├── Timeline
-│       └── Writer
-│           ├── MarkdownWriter.swift
-│           ├── WriterDocument.swift
-│           ├── WriterState.swift
-│           ├── WriterStatusbar.swift
-│           ├── WriterToolbar.swift
-│           ├── WriterToolbarConfig.swift
-│           └── WriterWindow.swift
+│   ├── Views
+│   │   ├── Chapter
+│   │   ├── Character
+│   │   │   └── CharacterSheet.swift
+│   │   └── Index
+│   │       ├── IndexCard.swift
+│   │       └── IndexWindow.swift
+│   └── Writer
+│       ├── WriterDocument.swift
+│       ├── WriterState.swift
+│       └── WriterWindow.swift
 └── StoryWriter.xcodeproj
     ├── Info.plist
     ├── project.pbxproj
@@ -210,5 +216,5 @@ lithalean@Mac StoryWriter % tree
             └── xcschemes
                 └── xcschememanagement.plist
 
-46 directories, 163 files
+47 directories, 168 files
 lithalean@Mac StoryWriter % 

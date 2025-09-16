@@ -1,5 +1,10 @@
 # StoryWriter Architecture
 
+**Version**: 3.0.0  
+**Last Updated**: September 2025  
+**Status**: Production Architecture  
+**Completeness**: Architecture 95%, Implementation 60-65%
+
 ## System Overview
 
 StoryWriter is a SwiftUI-based creative writing application implementing a **behavior-contract architecture** with a single-window, multi-panel design. The application supports macOS, iOS, and tvOS platforms, focusing on markdown-based writing with integrated story management tools.
@@ -15,55 +20,51 @@ StoryWriter is a SwiftUI-based creative writing application implementing a **beh
          │ (Panel Router) │
          └───────┬────────┘
                  │
-    ┌────────────┼────────────┬──────────┬──────────┐
-    │            │            │          │          │
-┌───▼────┐  ┌───▼────┐  ┌────▼───┐  ┌──▼───┐  ┌───▼────┐
-│Inspector│  │ Writer │  │Character│  │Index │  │Timeline│
-│  Panel  │  │ Window │  │  Sheet  │  │Window│  │(Future)│
-└─────────┘  └────────┘  └─────────┘  └──────┘  └────────┘
+    ┌────────────┼────────────┐
+    │            │            │
+┌───▼────┐  ┌───▼────┐  ┌────▼────┐
+│Inspector│  │ Writer │  │ Reader  │
+│  Panel  │  │ Window │  │ Window  │
+└─────────┘  └────────┘  └─────────┘
+           (Formatter Panel →)
 ```
 
 ## Core Architecture Patterns
 
 ### 1. Behavior-Contract Pattern
 
-The entire application follows a strict behavior-contract pattern where:
+The entire application follows a strict behavior-contract pattern where components own no state:
 
 ```swift
 // Components own no state
-struct WriterToolbar: View {
-    let config: WriterToolbarConfig  // Only behaviors
+struct ProjectToolbar: View {
+    let config: ProjectToolbarConfig  // Only behaviors
 }
 
 // Configs contain only closures and computed values
-struct WriterToolbarConfig {
-    var fontSize: CGFloat
-    var setFontSize: (CGFloat) -> Void
-    var incrementFontSize: () -> Void
-    var decrementFontSize: () -> Void
-    var showLineNumbers: Bool
-    var toggleLineNumbers: () -> Void
-    var wordCount: Int
-    var lineCount: Int
-    var isDirty: Bool
+struct ProjectToolbarConfig {
+    var isInspectorVisible: () -> Bool
+    var toggleSidebar: () -> Void
+    var selectedSection: () -> ProjectState
+    var selectSection: (ProjectState) -> Void
+    var isDirty: () -> Bool
+    var save: () -> Void
+    var canSave: () -> Bool
     // No @State, no stored properties
 }
 
 // Parents own state and pass behaviors
-struct WriterWindow: View {
-    @StateObject private var state = WriterState()
+struct ContentView: View {
+    @State private var showInspector = true
+    @StateObject private var document = WriterDocument()
     
-    private var toolbarConfig: WriterToolbarConfig {
-        WriterToolbarConfig(
-            fontSize: state.fontSize,
-            setFontSize: { state.fontSize = $0 },
-            incrementFontSize: { state.incrementFontSize() },
-            decrementFontSize: { state.decrementFontSize() },
-            showLineNumbers: state.showLineNumbers,
-            toggleLineNumbers: { state.showLineNumbers.toggle() },
-            wordCount: state.wordCount,
-            lineCount: state.lineCount,
-            isDirty: state.document?.isDirty ?? false
+    private var toolbarConfig: ProjectToolbarConfig {
+        ProjectToolbarConfig(
+            isInspectorVisible: { showInspector },
+            toggleSidebar: { showInspector.toggle() },
+            isDirty: { document.isDirty },
+            save: { document.save() },
+            // ... other behaviors
         )
     }
 }
@@ -75,63 +76,57 @@ struct WriterWindow: View {
 - Platform reusability
 - Clear data flow
 
-### 2. Single-Window Panel Architecture
+### 2. Single-Window Architecture (Simplified)
 
-- **ContentView Router**: Switches between panels based on selection
-- **ProjectToolbar**: Unified navigation across all views (3 main panels)
-- **Inspector Sidebar**: Toggleable file browser/outliner
-- **Floating Panel Style**: Consistent glass-morphism design
+- **ContentView Router**: Switches between Writer/Reader modes
+- **ProjectToolbar**: Unified navigation and save controls
+- **Inspector Sidebar**: File browser (left side)
+- **Formatter Panel**: Text formatting controls (right side)
+- **ProjectStatusbar**: Information display (bottom overlay)
 
 ### 3. State Management Architecture
 
 ```swift
-// Writer View State
-@MainActor
-final class WriterState: ObservableObject {
-    @Published var fontSize: CGFloat = 14.0
-    @Published var showLineNumbers: Bool = true
-    @Published var wordWrap: Bool = true  // Future
-    
-    weak var document: WriterDocument?
-    
-    var wordCount: Int { /* computed from document */ }
-    var lineCount: Int { /* computed from document */ }
-    var characterCount: Int { /* computed from document */ }
-    
-    func incrementFontSize() {
-        fontSize = min(24, fontSize + 1)
-    }
-    
-    func decrementFontSize() {
-        fontSize = max(11, fontSize - 1)
-    }
-}
-
-// Document Model
+// Document Model (Complete)
 @MainActor
 final class WriterDocument: ObservableObject {
     @Published var content: String = ""
     @Published var title: String = "Untitled"
     @Published var isDirty: Bool = false
+    @Published var wordCount: Int = 0
+    @Published var lastSaved: Date? = nil
+    @Published var isSaving: Bool = false
     
     private var saveTimer: Timer?
-    private let autoSaveDelay: TimeInterval = 2.0
+    private var filePath: URL?
     
-    func scheduleAutoSave() {
-        saveTimer?.invalidate()
-        saveTimer = Timer.scheduledTimer(withTimeInterval: autoSaveDelay, repeats: false) { _ in
-            Task { @MainActor in
-                self.save()
-            }
-        }
-    }
+    func save() { /* Native save dialogs */ }
+    func saveAs() { /* Force new location */ }
+    private func autoSave() { /* 2-second delay */ }
 }
 
-// Project Management
+// View State (Separate from Document)
 @MainActor
-final class ProjectManager: ObservableObject {
-    @Published var currentProject: StoryProject?
-    @Published var recentProjects: [StoryProjectFile] = []
+final class WriterState: ObservableObject {
+    @Published var fontSize: CGFloat = 15
+    @Published var showLineNumbers: Bool = false
+    @Published var wordWrap: Bool = true
+    
+    weak var document: WriterDocument?
+    
+    let minFontSize: CGFloat = 11
+    let maxFontSize: CGFloat = 24
+}
+
+// Reader State (Foundation)
+@MainActor
+final class ReaderState: ObservableObject {
+    @Published var markdown: String = ""
+    @Published var fontSize: CGFloat = 18  // Larger for reading
+    @Published var showStats: Bool = false
+    
+    let minFontSize: CGFloat = 12
+    let maxFontSize: CGFloat = 28
 }
 ```
 
@@ -147,11 +142,11 @@ struct StoryProject: Codable {
     var dateCreated: Date
     var dateModified: Date
     var chapters: [StoryChapter]
-    var characters: [StoryCharacter]  // Future
-    var indexCards: [IndexCard]       // Future
+    var characters: [StoryCharacter]  // UI only currently
+    var indexCards: [IndexCard]       // UI only currently
     var tags: [String]
     var notes: String
-    // No node/edge data (moved to StoryMapper)
+    // No mapper data (separated to StoryMapper app)
 }
 
 // SwiftData (Scaffolded, unused)
@@ -163,86 +158,172 @@ struct StoryProject: Codable {
 ### File Management
 
 - **Extension**: `.storyproject`
-- **Location**: `~/Documents/StoryWriter Projects` (macOS)
+- **Location**: `~/Documents/StoryWriter Projects/` (macOS)
 - **Format**: Pretty-printed JSON
 - **Auto-save**: 2-second delay after changes
-- **Recent Files**: UserDefaults with 10-item limit
+- **Save System**: ✅ COMPLETE with native dialogs
 
-## Module Organization
+## Module Organization (September 2025)
 
 ### Application Layer
 ```
 App/
 ├── StoryWriterApp.swift       # Entry point
-├── ContentView.swift          # Panel router
+├── ContentView.swift          # Panel router & statusbar
+├── AppBackground.swift        # Canvas texture
 └── Item.swift                 # SwiftData model (future)
 ```
 
-### View Components
+### Core Components
 ```
-Views/
-├── Writer/
-│   ├── WriterWindow.swift           # Container
-│   ├── WriterDocument.swift         # Document model
-│   ├── WriterState.swift            # View state
-│   ├── WriterToolbar.swift          # Behavior-contract toolbar
-│   ├── WriterToolbarConfig.swift    # Behaviors only
-│   ├── WriterStatusbar.swift        # Bottom status
-│   └── MarkdownWriter.swift         # Editor (TextEditor now, MarkdownUI future)
-├── Character/
-│   └── CharacterSheet.swift         # Character management (UI only)
-├── Index/
-│   ├── IndexWindow.swift            # Card grid
-│   └── IndexCard.swift              # Card component
-├── Timeline/                        # Empty (future)
-└── StatefulPreviewWrapper.swift     # Testing helper
+Writer/                        # ✅ Complete
+├── WriterWindow.swift         # Paper document design
+├── WriterDocument.swift       # Save/load functionality
+└── WriterState.swift          # Editor preferences
+
+Reader/                        # 🎯 Foundation ready
+├── ReaderWindow.swift         # Book-style view
+└── ReaderState.swift          # Reading preferences
+
+Project/                       # ✅ Complete
+├── ProjectToolbar.swift       # Unified toolbar
+├── ProjectToolbarConfig.swift # Behavior contract
+├── ProjectStatusbar.swift     # Bottom info display
+├── ProjectStatusbarConfig.swift # Statusbar contract
+└── ProjectState.swift         # Writer/Reader enum
+
+Formatter/                     # ✅ Complete
+├── FormatterPanel.swift       # Right sidebar
+└── FormatControlsView.swift   # Text controls
+
+Inspector/                     # ✅ Complete
+├── InspectorPanel.swift       # Left sidebar
+└── InspectorView.swift        # File browser
 ```
 
-### Project Components
+### UI-Only Components (No Backend)
 ```
-Project/
-├── ProjectBrowser.swift         # Project selection
-├── ProjectState.swift           # Section enum (3 panels)
-├── ProjectToolbar.swift         # Main navigation
-└── ProjectToolbarConfig.swift   # Behaviors only
-```
+Character/
+└── CharacterSheet.swift       # Character UI (no persistence)
 
-### Shared Components
-```
-Sources/Shared/
-├── GlassButtonStyle.swift      # Unified button style
-├── ToolbarStyle.swift          # Platform adaptations
-├── PlatformColor.swift         # Cross-platform colors
-└── Extensions/
-    ├── FilePermissionsHelper.swift
-    └── HapticFeedback.swift
+Index/
+├── IndexWindow.swift          # Card grid (shelved)
+└── IndexCard.swift            # Card component
+
+Timeline/                      # Empty directory
 ```
 
 ### Core Systems
 ```
 Core/
-├── FileSystem.swift            # File operations
-├── FileBrowser.swift           # File browser UI
-└── FileSystemModel.swift       # File system abstraction
+├── FileBrowser.swift          # ✅ Unified file browser
+├── MarkdownReader.swift       # Placeholder for MarkdownUI
+└── MarkdownWriter.swift       # TextEditor (temporary)
 
 Managers/
-└── ProjectManager.swift        # Project state & persistence
+└── ProjectManager.swift       # Project state & persistence
 
-Inspector/
-├── InspectorPanel.swift        # Side panel container
-├── InspectorView.swift         # Inspector content
-└── OutlinerView.swift          # Document outline
+Sources/Shared/
+├── GlassButtonStyle.swift     # Unified button style
+├── ToolbarStyle.swift         # Platform adaptations
+└── PlatformColor.swift        # Cross-platform colors
 ```
 
-### MarkdownUI (Ready for Integration)
+### MarkdownUI (Not Integrated)
 ```
-MarkdownUI/                     # 97 files
-├── DSL/                        # Markdown DSL
-├── Parser/                     # Markdown parsing
-├── Renderer/                   # Text rendering
-├── Theme/                      # Styling system
-├── Utility/                    # Helper functions
-└── Views/                      # UI components
+MarkdownUI/                    # 97 files ready
+├── DSL/                       # Markdown DSL
+├── Parser/                    # Markdown parsing
+├── Renderer/                  # Text rendering
+├── Theme/                     # Styling system
+├── Utility/                   # Helper functions
+└── Views/                     # UI components
+```
+
+## Component Communication
+
+### Data Flow
+
+```
+User Action (typing, save button)
+    ↓
+WriterDocument Update
+    ↓
+Auto-save Timer (2 seconds)
+    ↓
+@Published property change
+    ↓
+ContentView receives update
+    ↓
+ProjectStatusbar updates (via config)
+```
+
+### Mode Switching
+
+```swift
+ContentView:
+  currentSection → ProjectState enum
+    ↓
+  Switch statement → Show mode
+    .writer: WriterWindow
+    .reader: ReaderWindow
+    ↓
+  Mode loads with isolated state
+```
+
+### Panel Management
+
+```
+Left Panel (Inspector):
+  - File browser
+  - Toggle via toolbar
+  
+Center Content:
+  - Writer or Reader mode
+  - Always visible
+  
+Right Panel (Formatter):
+  - Text formatting controls
+  - Toggle via toolbar
+  
+Bottom Overlay (Statusbar):
+  - Word count, save status
+  - Always visible
+```
+
+## Design System
+
+### Visual Hierarchy
+
+1. **Background**: Canvas texture (AppBackground)
+2. **Document**: Paper with shadow (Writer mode)
+3. **Overlays**: Toolbar and statusbar
+4. **Panels**: Glass morphism sidebars
+
+### Glass-Morphism Theme
+
+```swift
+// Consistent styling across all components
+.background(.ultraThinMaterial)
+.cornerRadius(14, style: .continuous)
+.shadow(radius: 10, y: 4)
+.overlay(
+    RoundedRectangle(cornerRadius: 14)
+        .strokeBorder(Color.primary.opacity(0.08))
+)
+```
+
+### Typography
+
+```swift
+// Writing (monospaced for editing)
+Writer: .system(size: 15, design: .monospaced)
+
+// Reading (serif for comfort)
+Reader: .system(size: 18, design: .serif)
+
+// UI (system default)
+Interface: .system(size: 13)
 ```
 
 ## Platform Architecture
@@ -250,16 +331,17 @@ MarkdownUI/                     # 97 files
 ### Adaptive Design
 
 ```swift
-// Platform-specific implementations
 #if os(macOS)
-    .toolbarStyle(.macOS)
-    .onHover { hovering = $0 }
+    // Native save panels
+    NSSavePanel()
+    // Keyboard shortcuts
+    .keyboardShortcut("s", modifiers: [.command])
 #elseif os(iOS)
-    .toolbarStyle(.iOS)
-    .buttonStyle(GlassButtonStyle())
+    // Document directory saving
+    // Touch-optimized targets
 #elseif os(tvOS)
-    .toolbarStyle(.iOS)  // Reuse iOS style
-    .frame(width: 1920, height: 1080)
+    // Focus engine support
+    // Remote control optimized
 #endif
 ```
 
@@ -270,175 +352,149 @@ MarkdownUI/                     # 97 files
 - **Swift**: 5.9+
 - **Xcode**: 15.0+
 
-## Component Communication
-
-### Data Flow
-
-```
-User Action (typing, toolbar click)
-    ↓
-WriterState/WriterDocument Update
-    ↓
-Auto-save Timer (2 seconds)
-    ↓
-@Published property change
-    ↓
-SwiftUI Redraw
-    ↓
-Child Components Update
-```
-
-### Panel Switching
-
-```swift
-ContentView:
-  selectedCenterButton → ProjectState enum
-    ↓
-  Switch statement → Show panel
-    0: Writer
-    1: Characters  
-    2: Index
-    ↓
-  Panel loads with isolated state
-```
-
-## Design System
-
-### Glass-Morphism Theme
-
-```swift
-// Consistent styling across all components
-.background(.ultraThinMaterial)
-.cornerRadius(14, style: .continuous)
-.shadow(radius: 10, y: 4)
-```
-
-### Spacing Guidelines
-- Panel spacing: 16pt (HIG standard)
-- Container padding: 20pt
-- Toolbar margins: 12pt horizontal, 12pt top
-- Internal padding: 8-10pt
-
 ## Performance Characteristics
 
 ### Current Implementation
 - **Text Editing**: Native TextEditor (fast)
-- **Markdown Rendering**: Not integrated yet
-- **File I/O**: Synchronous operations
-- **State Updates**: @Published with Combine
+- **Save System**: Native dialogs (responsive)
 - **Auto-save**: Timer-based (2 second delay)
+- **Panel Switching**: < 50ms with animations
+- **Mode Switching**: Instant with spring animation
 
 ### Optimization Targets
 - Instant text response (<16ms)
-- Sub-100ms panel switching
-- Markdown render <200ms for 10k words
+- Markdown render <200ms for 10k words (when integrated)
 - Auto-save without UI blocking
+- Smooth 60fps animations
 
 ## Architectural Decisions
 
-### Why Behavior-Contract Pattern?
-- **Testability**: Pure functions are easy to test
+### Why Unified Toolbar?
+- **Simplicity**: One toolbar for all controls
+- **Clarity**: Navigation vs formatting separation
+- **Save Integration**: Natural placement on right
+- **Reduced Complexity**: Eliminated WriterToolbar
+
+### Why Separate Writer/Reader Modes?
+- **Focus**: Distinct editing vs reading experiences
+- **Typography**: Different fonts for each purpose
+- **Future**: Foundation for advanced reader features
+- **Simplicity**: Just two modes instead of many panels
+
+### Why Paper Document Design?
+- **Visual Metaphor**: Familiar writing surface
+- **Focus**: Document stands out from UI
+- **Contrast**: Light paper on dark canvas
+- **Professional**: Publication-ready appearance
+
+### Why Behavior-Contract Throughout?
+- **Testability**: Pure functions everywhere
 - **Reusability**: Components work on all platforms
-- **Clarity**: Clear separation of concerns
-- **Maintainability**: No hidden state dependencies
-
-### Why Single Window?
-- **Simplicity**: One window, multiple panels
-- **iOS Compatibility**: Natural on mobile
-- **State Management**: Centralized routing
-- **User Experience**: Familiar panel switching
-
-### Why Separate WriterState and WriterDocument?
-- **Separation of Concerns**: View state vs document model
-- **Persistence**: Document handles saving, state handles UI
-- **Testing**: Can test document logic without UI
-- **Reusability**: Document model can be used elsewhere
-
-### Why JSON Storage?
-- **Human Readable**: Debug and inspect files
-- **Simple**: No migration complexity
-- **Portable**: Easy backup/sharing
-- **Future-Proof**: SwiftData ready when needed
+- **Clarity**: No hidden state dependencies
+- **Maintainability**: Easy to understand and modify
 
 ## Quality Attributes
 
-### Strengths
-- **Clean Architecture**: Behavior-contract throughout
+### Strengths ✅
+- **Save System**: Complete with auto-save
+- **Architecture**: Clean behavior-contract pattern
+- **Toolbar**: Unified and simplified
+- **Statusbar**: Full information display
+- **File Browser**: Single implementation
 - **Platform Support**: True multi-platform
-- **Extensibility**: Easy to add features
-- **Consistency**: Unified design system
-- **Testability**: Isolated components
-- **Document Model**: Clear separation of concerns
+- **Visual Design**: Cohesive glass morphism
 
-### Current Limitations
+### Current Limitations ❌
 - **No Markdown Rendering**: TextEditor only
-- **No Undo/Redo**: Not implemented
-- **Character/Index Persistence**: UI only, no data
-- **Limited Accessibility**: VoiceOver incomplete
-- **File Browser Redundancy**: 3 implementations
+- **No Undo/Redo**: Critical missing feature
+- **Character/Index**: UI only, no persistence
+- **No Export**: Can't export to PDF/HTML
+- **No Templates**: New documents start blank
 
-### Technical Debt
-- **Three File Browsers**: Need consolidation
+### Technical Debt 🔧
 - **MarkdownUI Integration**: 97 files ready but not connected
-- **Timeline View**: Directory exists, not implemented
+- **Timeline View**: Empty directory
 - **Outline Panel**: Placeholder only
-- **Location Directory**: Should be removed (oversight)
+- **Section Title**: Hardcoded in statusbar
 
 ## Extension Points
 
-### Adding Panels
-1. Create Window view
-2. Add to ContentView switch
-3. Add to ProjectState enum
-4. Update toolbar config
+### Adding Export Formats
+1. Add export menu to toolbar
+2. Create export service
+3. Implement format converters
+4. Add progress indicator
 
 ### Integrating MarkdownUI
 1. Replace TextEditor in MarkdownWriter
 2. Configure theme/styling
-3. Add syntax highlighting
-4. Connect to WriterDocument
+3. Add to ReaderWindow
+4. Enable syntax highlighting
 
-### Adding Platforms
-- watchOS: Possible with reduced features
-- visionOS: Natural fit for spatial computing
+### Adding Persistence
+1. Create CharacterModel
+2. Add to WriterDocument
+3. Include in save/load
+4. Update UI bindings
 
 ## Testing Strategy
 
 ### Unit Tests
-- WriterState operations (font size bounds)
-- WriterDocument save/load
-- Config structs (pure functions)
-- File I/O operations
-
-### UI Tests
-- Panel switching
-- Toolbar interactions
-- Text editing flow
-- Auto-save behavior
+- Behavior contracts (pure functions)
+- Document save/load cycles
+- Font size boundaries
+- Mode switching logic
 
 ### Integration Tests
-- Project save/load
-- Multi-platform behavior
-- MarkdownUI rendering (future)
+- Toolbar interactions
+- Panel synchronization
+- Save system flow
+- Platform differences
+
+### UI Tests
+- Animation smoothness
+- Touch/click targets
+- Accessibility compliance
+- Keyboard shortcuts
 
 ## Future Architecture
 
 ### Immediate Priorities
-- [x] WriterDocument implementation
-- [x] WriterState management
+- [x] Save functionality ✅
+- [x] Unified toolbar ✅
+- [x] Reader mode foundation ✅
 - [ ] MarkdownUI integration
-- [ ] File browser consolidation
-- [ ] Character data persistence
+- [ ] Undo/redo system
+- [ ] Character persistence
 
 ### Planned Improvements
-- [ ] SwiftData migration
-- [ ] Undo/redo system
 - [ ] Export formats (PDF, DOCX, HTML)
+- [ ] Document templates
+- [ ] Theme customization
 - [ ] Cloud sync
-- [ ] Collaborative editing
+- [ ] Plugin system
 
 ### Strategic Considerations
 - MarkdownUI as XCFramework for reuse
 - Shared components with SyntaxWriter/LocalLLM
-- Plugin system for export formats
-- Theme customization system
+- Progressive disclosure of features
+- Accessibility-first design
+
+## Success Metrics
+
+### Architecture (95%)
+- ✅ Behavior-contract pattern complete
+- ✅ Component isolation achieved
+- ✅ Platform support working
+- ✅ Save system integrated
+- ❌ Some redundant code remains
+
+### Implementation (60-65%)
+- ✅ Core editing functional
+- ✅ Save/load complete
+- ✅ Navigation working
+- ❌ MarkdownUI not integrated
+- ❌ No undo/redo
+- ❌ Character/Index not persistent
+
+The architecture represents a mature, well-structured foundation ready for the remaining implementation work, particularly MarkdownUI integration which will transform the user experience.

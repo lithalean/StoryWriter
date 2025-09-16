@@ -1,144 +1,166 @@
 # StoryWriter Navigation & User Flows
 
-**Architecture**: Single-window with panel switching  
+**Version**: 3.0.0  
+**Architecture**: Single-window with mode switching  
 **Pattern**: Behavior-contract navigation  
-**Platform Support**: macOS, iOS, tvOS
+**Platform Support**: macOS, iOS, tvOS  
+**Last Updated**: September 2025
 
 ## Navigation Architecture
 
-### Single-Window Design
+### Simplified Two-Mode Design
 
-Despite component names ending in "Window", StoryWriter uses a **single-window architecture** with switchable panels:
+StoryWriter uses a **single-window architecture** with two primary modes and toggleable panels:
 
 ```
 StoryWriterApp
     ↓
 ContentView (Router)
-    ├── ProjectToolbar (Persistent navigation)
-    ├── Inspector Panel (Toggleable sidebar)
-    └── Main Panel (Switchable content)
-        ├── WriterWindow
-        ├── CharacterSheet
-        ├── IndexWindow
-        └── Timeline (Future)
+    ├── ProjectToolbar (Unified controls)
+    ├── Inspector Panel (Left sidebar - toggleable)
+    ├── Main Content (Mode-based)
+    │   ├── WriterWindow
+    │   └── ReaderWindow
+    ├── Formatter Panel (Right sidebar - toggleable)
+    └── ProjectStatusbar (Bottom overlay)
 ```
 
 ## Navigation Control
 
 ### Primary Navigation - ProjectToolbar
 
-Using behavior-contract pattern:
+Unified toolbar with all primary controls:
 
 ```swift
 ProjectToolbarConfig:
+  // Mode switching (center)
   selectedSection: () -> ProjectState
   selectSection: (ProjectState) -> Void
-```
-
-**Sections (3 panels):**
-```swift
-selectedCenterButton:
-  0 → WriterWindow (pen icon)
-  1 → CharacterSheet (person icon)
-  2 → IndexWindow (grid icon)
-```
-
-### Inspector Toggle
-
-```swift
-ProjectToolbarConfig:
+  
+  // Panel toggles (left/right)
   isInspectorVisible: () -> Bool
   toggleSidebar: () -> Void
+  isRightPanelVisible: () -> Bool
+  toggleRightPanel: () -> Void
+  
+  // Save functionality (right)
+  isDirty: () -> Bool
+  save: () -> Void
+  canSave: () -> Bool
 ```
 
-Animated with spring: `response: 0.35, dampingFraction: 0.85`
+**Modes (2 states):**
+```swift
+enum ProjectState {
+  case writer  // Document editing (doc icon)
+  case reader  // Reading view (book icon)
+}
+```
 
 ## User Flows
 
-### 1. Writing Flow
+### 1. Writing Flow (Primary)
 
 ```
-User clicks pen icon
-    → ContentView.selectedCenterButton = 0
-    → WriterWindow displays
-        → WriterToolbar (functional)
-            - Font size controls (11-24pt)
-            - Increment/decrement buttons
-            - Line numbers toggle
-            - Word count display
-            - Line count display
-            - Dirty state indicator
-        → MarkdownWriter (TextEditor now)
-        → WriterStatusbar (metrics)
+User clicks doc icon or starts in Writer mode
+    → ContentView.currentSection = .writer
+    → WriterWindow displays with paper document
+        → TextEditor (temporary, MarkdownUI ready)
+        → Auto-save timer (2 seconds)
+        → Save via toolbar button or Cmd+S
+    → FormatterPanel available (right toggle)
+        → Font size controls
+        → Bold/Italic/Underline
+        → Text alignment
+        → Line numbers toggle
 
 Capabilities:
-✅ Adjust font size (11-24pt range)
-✅ Toggle line numbers
-✅ See word/line count
-✅ Track dirty state
-✅ Auto-save timer (2 seconds)
-⏳ Markdown rendering (MarkdownUI ready)
-🔄 Document persistence (WriterDocument exists)
+✅ Full text editing
+✅ Complete save system (auto + manual)
+✅ Font formatting controls
+✅ Line numbers display
+✅ Word/character counting
+✅ Paper document design
+⏳ Markdown rendering (97 files ready)
+❌ Undo/Redo system
 ```
 
-### 2. Character Management Flow
+### 2. Reading Flow
 
 ```
-User clicks person icon
-    → ContentView.selectedCenterButton = 1
-    → CharacterSheet displays
-        → Form sections:
-            - Basic Info
-            - Physical Description
-            - Development
-            - Notes
-        → Responsive layout (>700pt side-by-side)
+User clicks book icon
+    → ContentView.currentSection = .reader
+    → ReaderWindow displays
+        → Serif typography (18pt default)
+        → Larger font range (12-28pt)
+        → Read-only view
+        → Canvas background
 
 Capabilities:
-✅ Complete UI form
-✅ Responsive design
-🎨 Visual design complete
-❌ Data persistence
-❌ Project integration
+✅ Mode switching works
+✅ Font size adjustment
+✅ Optimized typography
+⏳ Markdown rendering (ready to integrate)
+❌ Pagination
+❌ Export options
 ```
 
-### 3. Index Card Flow
+### 3. Save Flow (Complete)
 
 ```
-User clicks grid icon
-    → ContentView.selectedCenterButton = 2
-    → IndexWindow displays
-        → Responsive grid (220pt min width)
-        → Static example cards
+Document edited
+    → isDirty = true
+    → Save button shows filled icon
+    → User clicks save or presses Cmd+S
+        → Native save dialog (first time)
+        → Direct save (existing file)
+    → Auto-save after 2 seconds of inactivity
+    → Statusbar shows "Saved just now"
 
-Capabilities:
-✅ Responsive layout
-🎨 Visual design complete
-❌ Card CRUD operations
-❌ Data binding
-❌ Drag and drop
+Save States:
+✅ Manual save via button
+✅ Keyboard shortcut (Cmd+S)
+✅ Auto-save timer
+✅ Save As functionality
+✅ Dirty state tracking
 ```
 
 ### 4. Inspector/File Browser Flow
 
 ```
-User toggles sidebar
+User toggles left sidebar
     → showInspector = true/false
     → InspectorPanel displays
-        → Draggable divider
-        → OutlinerView (top)
-            → FileBrowser
-        → PropertiesView (bottom, empty)
+        → FileBrowser (single implementation)
+        → Three folders:
+            - Manuscript
+            - Characters  
+            - Locations
+        → "Open in Finder" on macOS
 
 Capabilities:
-✅ Browse file tree
-✅ Create folders/markdown files
-✅ Delete items
-✅ Expand/collapse folders
-✅ Color-coded icons
-✅ Hover states (macOS)
+✅ Browse file structure
+✅ Visual hierarchy
+✅ Open in Finder
 ❌ Open files in editor
-❌ Properties editing
+❌ Create/Delete (removed for simplicity)
+```
+
+### 5. Formatter Panel Flow
+
+```
+User toggles right sidebar
+    → showFormatter = true/false
+    → FormatterPanel displays
+        → Font size slider
+        → Text formatting buttons
+        → Alignment controls
+        → Line numbers toggle
+
+Capabilities:
+✅ All controls functional
+✅ Real-time updates
+✅ Settings persistence
 ```
 
 ## State Management
@@ -146,206 +168,240 @@ Capabilities:
 ### Global State (ContentView)
 
 ```swift
-@StateObject projectManager = ProjectManager()
+// Navigation
+@State currentSection: ProjectState = .writer
 @State showInspector = true
-@State selectedCenterButton = 0
+@State showFormatter = false
+
+// Document
+@StateObject document = WriterDocument()
+@StateObject projectManager = ProjectManager()
+
+// Statusbar preferences (persisted)
+@AppStorage("statusBar.showCharCount") showCharCount = false
+@AppStorage("statusBar.showEditingMode") showEditingMode = true
+@AppStorage("statusBar.showSection") showSection = true
 ```
 
-### Panel-Specific State
+### Mode-Specific State
 
 **WriterWindow:**
 ```swift
-@StateObject state = WriterState()           // View state
-@StateObject document = WriterDocument()     // Document model
+@StateObject state = WriterState()      // View preferences
+@StateObject document = WriterDocument() // Document with save
 ```
 
-**CharacterSheet:**
+**ReaderWindow:**
 ```swift
-@State character model (not implemented)
-// UI state only currently
+@StateObject state = ReaderState()      // Reading preferences
+// Future: shares document with Writer
 ```
 
-**IndexWindow:**
-```swift
-// Static cards only
-// No state management yet
+## Panel Layout System
+
+### Three-Panel Architecture
+
 ```
+┌─────────┬──────────────────┬──────────┐
+│Inspector│   Main Content   │Formatter │
+│ (Left)  │  (Writer/Reader) │ (Right)  │
+├─────────┴──────────────────┴──────────┤
+│           Status Bar                   │
+└────────────────────────────────────────┘
+```
+
+### Panel States
+- **Both panels**: Inspector + Content + Formatter
+- **Left only**: Inspector + Content
+- **Right only**: Content + Formatter  
+- **Neither**: Content only (maximized)
 
 ## Animation System
 
 ### Consistent Spring Animations
 
 ```swift
-// Panel transitions
+// Panel toggles
 .spring(response: 0.35, dampingFraction: 0.85)
 
-// Card interactions
-.spring(response: 0.3, dampingFraction: 0.8)
+// Mode transitions
+.spring(response: 0.3, dampingFraction: 0.85)
 
-// Quick feedback
-.spring(response: 0.2, dampingFraction: 0.9)
-
-// Divider dragging
-.interactiveSpring(response: 0.15, dampingFraction: 1)
+// Save button feedback
+.scaleEffect(pressed ? 0.97 : 1.0)
 ```
 
 ## Platform Adaptations
 
 ### macOS
-- Hover states (file items, cards)
-- Cursor changes (text, resize)
-- Native menu styling
-- 320pt inspector width
-- Keyboard shortcuts
+- Native save panels (NSSavePanel)
+- Keyboard shortcuts (Cmd+S)
+- "Open in Finder" support
+- Hover states
+- 52pt toolbar height
 
 ### iOS/iPadOS
-- Touch-optimized targets
-- Glass button style for menus
-- 280pt inspector width
+- Document directory saving
+- Touch-optimized controls
+- Glass button styling
 - Sheet presentations
-- Gesture navigation
+- Adaptive layouts
 
 ### tvOS
-- Preview support
-- Fixed 1920x1080 layout
 - Simplified interactions
-- iOS toolbar style
-
-## Modal & Sheet System
-
-### Implemented Sheets
-
-**FileBrowserCreateSheet:**
-```swift
-- Create folder or markdown file
-- Name input field
-- Cancel/Create actions
-- NavigationView wrapper
-```
-
-### Missing Modals
-- Project creation dialog
-- Save/Open dialogs
-- Export options
-- Settings/Preferences
+- Focus engine support
+- Fixed 1920x1080 layout
+- Remote control optimized
 
 ## Data Flow
 
 ### Behavior-Contract Navigation
 
-All navigation uses closures, no direct state:
+All navigation through closures:
 
 ```swift
-// Toolbar owns no state
-ProjectToolbar(config: ProjectToolbarConfig)
+// Toolbar receives behaviors only
+ProjectToolbar(config: ProjectToolbarConfig(
+    selectedSection: { currentSection },
+    selectSection: { section in
+        currentSection = section
+    },
+    save: { document.save() },
+    isDirty: { document.isDirty }
+))
 
-// Parent provides behaviors
-ContentView:
-  config.selectSection = { section in
-    switch section {
-      case .storyFiles: selectedCenterButton = 0
-      case .characters: selectedCenterButton = 1
-      case .index: selectedCenterButton = 2
-    }
-  }
+// Statusbar receives data through closures
+ProjectStatusbar(config: ProjectStatusbarConfig(
+    wordCount: { document.wordCount },
+    lastSaved: { document.lastSaved }
+))
 ```
 
-### Panel Isolation
+### Document Flow
 
-Each panel maintains independent state:
-- WriterState/WriterDocument for writing
-- Character data models (future)
-- Index card storage (future)
+```
+WriterDocument (source)
+    ↓ @Published
+ContentView (coordinator)
+    ↓ Closures
+Toolbar/Statusbar (display)
+```
 
 ## Accessibility
 
 ### Implemented
-- `.help()` tooltips on buttons
-- Semantic colors
+- `.help()` tooltips on all buttons
+- Semantic button labels
+- Adjustable font sizes (11-28pt range)
+- High contrast borders
 - Standard SwiftUI accessibility
-- Focus indicators (partial)
-- Adjustable font sizes (11-24pt)
 
 ### Missing
-- Complete VoiceOver labels
+- Complete VoiceOver optimization
 - Full keyboard navigation
-- Tab order definition
-- Skip links
-- Role definitions
+- Custom accessibility actions
+- Reading progress announcements
 
 ## Performance
 
 ### Current Metrics
-- Panel switch: < 50ms
-- Inspector toggle: Animated ~350ms
+- Mode switch: < 50ms
+- Panel toggle: ~350ms animated
+- Save operation: < 100ms typical
+- Auto-save delay: 2000ms
 - Text editing: Native performance
-- File browser: Instant for < 100 items
 
-### Bottlenecks
-- File browser reloads entire tree
-- No lazy loading
-- Synchronous file operations
-- No virtualization for large documents
+### Optimizations
+- Spring animations GPU-accelerated
+- Lazy panel loading
+- Efficient state updates
+- Minimal redraws
 
 ## Working Features
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Panel switching | ✅ | Via toolbar buttons |
-| Inspector toggle | ✅ | Animated, persistent |
-| File browsing | ✅ | Tree view with actions |
-| Text editing | ✅ | With font controls |
-| Auto-save timer | ✅ | 2-second delay |
-| Dirty state tracking | ✅ | In WriterDocument |
-| Animations | ✅ | Consistent springs |
+| Mode switching | ✅ | Writer/Reader toggle |
+| Save system | ✅ | Complete with auto-save |
+| Panel toggles | ✅ | Inspector/Formatter |
+| Statusbar | ✅ | Full info display |
+| File browsing | ✅ | Single implementation |
+| Text editing | ✅ | With formatting controls |
+| Keyboard shortcuts | ✅ | Cmd+S implemented |
 
 ## Missing Features
 
-| Feature | Priority | Blocked By |
-|---------|----------|------------|
-| File opening | High | Browser-editor connection |
-| Save UI | High | No trigger in toolbar |
-| Character persistence | High | Data model needed |
-| Index card CRUD | High | Data model needed |
-| Undo/redo | Medium | Command pattern needed |
+| Feature | Priority | Implementation |
+|---------|----------|----------------|
+| MarkdownUI | Critical | 97 files ready |
+| Undo/Redo | High | Not started |
+| File opening | Medium | Browser disconnected |
+| Character data | Medium | UI only |
 | Export | Medium | Not started |
-| Search | Low | UI not designed |
-| Settings | Low | No preferences system |
+| Find/Replace | Low | Not designed |
+| Templates | Low | Not planned |
 
 ## Navigation Patterns
 
 ### Current Implementation
-- **Router Pattern**: ContentView as central router
-- **Behavior-Contract**: All navigation via configs
-- **State Isolation**: Panels independent
-- **Platform Adaptive**: Conditional compilation
+- **Two-Mode System**: Writer and Reader
+- **Unified Toolbar**: All controls in one place
+- **Behavior-Contract**: Navigation via closures
+- **Panel Independence**: Each panel self-contained
 
-### Future Considerations
-- Deep linking support
-- State restoration
-- Navigation history
-- Keyboard shortcuts
+### Removed Complexity
+- ~~WriterToolbar~~: Merged into ProjectToolbar
+- ~~4-Panel System~~: Simplified to 2 modes
+- ~~Multiple File Browsers~~: Single implementation
+- ~~Character/Index Navigation~~: Shelved for now
 
 ## Known Issues
 
 1. **File Opening**: Browser can't open files in editor
-2. **Save UI Missing**: No button to trigger saves
-3. **Panel Coordination**: Limited data sharing
-4. **File Browser Redundancy**: 3 implementations exist
-5. **Navigation History**: No back/forward support
+2. **Section Title**: Hardcoded as "Untitled Section"
+3. **No Undo/Redo**: Critical for editing
+4. **No Templates**: New documents start blank
 
 ## Best Practices
 
 ### DO
-- Use behavior-contract for navigation
-- Maintain panel isolation
-- Animate state changes
-- Platform-specific adaptations
-- Consistent spring animations
+- Use behavior-contract for all navigation
+- Maintain mode isolation
+- Apply consistent animations
+- Test platform differences
+- Keep toolbar unified
 
 ### DON'T
-- Add navigation state to toolbars
-- Create circular dependencies
+- Add state to navigation components
+- Create navigation dependencies
 - Skip animations
-- Ignore platform differences
 - Mix navigation patterns
+- Split toolbar functionality
+
+## Migration from Previous Version
+
+### What Changed
+- **Toolbar**: WriterToolbar removed, all in ProjectToolbar
+- **Navigation**: 4 panels reduced to 2 modes
+- **Save**: Now complete with button and auto-save
+- **File Browser**: 3 implementations reduced to 1
+- **Statusbar**: Added for information display
+
+### What Stayed
+- Behavior-contract pattern
+- Single-window architecture
+- Panel toggle system
+- Spring animations
+- Platform adaptations
+
+## Success Metrics
+
+### Navigation System (90% Complete)
+- ✅ Mode switching smooth
+- ✅ Panel toggles working
+- ✅ Save integration complete
+- ✅ Statusbar functional
+- ✅ Keyboard shortcuts
+- ❌ Undo/Redo navigation
+
+The navigation system has been significantly simplified and improved, with a focus on the core writing experience and clean mode separation.

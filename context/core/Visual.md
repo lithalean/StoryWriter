@@ -1,493 +1,417 @@
 # StoryWriter Visual Design System
 
-**Design Language**: Glass-Morphism with Continuous Curves  
+**Version**: 3.0.0  
+**Design Language**: Glass-Morphism with Paper Document Metaphor  
 **Theme**: Dark-First with Light Mode Support  
-**Architecture**: Unified Component Styling
+**Architecture**: Unified Component Styling  
+**Last Updated**: September 2025
 
 ## Design Philosophy
 
-StoryWriter implements a sophisticated **glass-morphism design system** with consistent materials, shadows, and animations across all platforms.
+StoryWriter implements a sophisticated **three-layer visual hierarchy** combining glass-morphism UI with a paper document metaphor for the writing surface, creating clear separation between interface and content.
 
 ### Core Principles
-1. **Glass-Morphism**: Ultra-thin materials with depth
-2. **Continuous Corners**: Soft, modern aesthetic
-3. **Adaptive Opacity**: State-based visual feedback
+1. **Paper Document Metaphor**: Writing surface as physical paper
+2. **Glass-Morphism UI**: Controls and panels use materials
+3. **Visual Hierarchy**: Canvas → Paper → Controls
 4. **Platform Harmony**: Native feel on each platform
+
+## Visual Hierarchy
+
+### Three-Layer System
+
+```
+Layer 1: Canvas Background (AppBackground)
+    ↓
+Layer 2: Paper Document (WriterWindow)
+    ↓
+Layer 3: UI Overlays (Toolbar, Statusbar, Panels)
+```
+
+### Paper Document Design
+
+```swift
+// WriterWindow Paper Appearance
+Background: Color(white: 0.98) // Off-white paper
+ColorScheme: .light (forced)   // Always light
+CornerRadius: 16pt (continuous)
+Shadow: black 0.2 opacity, 20pt radius, 10pt Y
+Padding: 20pt horizontal, 20pt top, 30pt bottom
+
+// Paper Texture
+LinearGradient(
+    colors: [
+        Color(white: 1.0, opacity: 0.5),
+        Color(white: 0.95, opacity: 0.3)
+    ],
+    startPoint: .topLeading,
+    endPoint: .bottomTrailing
+)
+```
+
+## Typography System
+
+### Writing Modes
+
+```swift
+// Writer Mode (Editing)
+Font: .system(size: 15, design: .monospaced)
+Range: 11-24pt (user adjustable)
+Line Height: 1.4
+Color: .primary on paper background
+
+// Reader Mode (Reading)
+Font: .system(size: 18, design: .serif)
+Range: 12-28pt (wider for accessibility)
+Line Height: 1.6
+Color: .primary on canvas
+
+// UI Elements
+Toolbar: .system(size: 13)
+Statusbar: .caption
+Formatter: .system(size: 14)
+```
+
+## Component Visual Updates
+
+### Unified ProjectToolbar
+
+```swift
+// Container (consolidated design)
+Height: 52pt fixed
+Background: .ultraThinMaterial
+CornerRadius: 14pt (continuous)
+Border: Color.primary.opacity(0.08), 1pt
+Shadow: radius 10pt, y: 4pt
+Padding: 12pt horizontal, 6pt vertical
+Margin: 8pt horizontal, 4pt top
+
+// Button Layout
+Left: [Sidebar Toggle] [New Project]
+Center: [Writer] [Reader]
+Right: [Save] [Formatter Toggle]
+
+// Save Button States
+Clean: "opticaldiscdrive" with .secondary
+Dirty: "opticaldiscdrive.fill" with .accentColor
+```
+
+### ProjectStatusbar
+
+```swift
+// Position and Style
+Location: Bottom overlay
+Height: ~30pt
+Background: .ultraThinMaterial with blur
+Typography: .caption size
+Color: .secondary for subtlety
+Padding: 8pt horizontal, 4pt vertical
+
+// Information Modules
+[Section] | Words: 1,234 | Draft | Saved 2 min ago | [⚙]
+```
+
+### Formatter Panel
+
+```swift
+// Right Sidebar Design
+Width: 280pt (iOS), 320pt (macOS)
+Background: .regularMaterial
+CornerRadius: 16pt (continuous)
+Shadow: black 0.15, radius 20pt, y: 8pt
+
+// Controls
+Font Size Slider: 11-24pt range
+Format Buttons: Bold, Italic, Underline
+Alignment: Left, Center, Right, Justify
+Line Numbers: Toggle switch
+```
 
 ## Color System
 
+### Canvas Background (AppBackground)
+
+```swift
+// Dark Mode (Primary)
+ZStack {
+    LinearGradient(
+        colors: [Color(white: 0.05), Color(white: 0.02)],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+    
+    // Noise texture overlay
+    Image("noise")
+        .opacity(0.02)
+        .blendMode(.plusLighter)
+}
+
+// Light Mode
+LinearGradient(
+    colors: [Color(white: 0.95), Color(white: 0.92)],
+    startPoint: .topLeading,
+    endPoint: .bottomTrailing
+)
+```
+
 ### Semantic Colors
+
 ```swift
-// Text
-.primary        // Adapts to color scheme
-.secondary      // 60% opacity
-.accentColor    // System blue
+// Status Indicators
+.dirty: .accentColor (blue)
+.saved: .secondary
+.saving: .yellow
+.error: .red
 
-// Backgrounds
-.ultraThinMaterial    // Primary glass effect
-.regularMaterial      // Panels and containers
-Color.secondary.opacity(0.05)  // Subtle tints
-```
-
-### Application Background
-```swift
-// Dark Mode
-LinearGradient(
-    colors: [Color(white: 0.05), Color(white: 0.02)],
-    startPoint: .topLeading,
-    endPoint: .bottomTrailing
-)
-
-// Light Mode  
-LinearGradient(
-    colors: [Color(white: 0.98), Color(white: 0.95)],
-    startPoint: .topLeading,
-    endPoint: .bottomTrailing
-)
-```
-
-### Content Type Colors
-```swift
-// Writing Elements
-.chapter: .blue
-.scene: .purple
-.character: .green
-.note: .yellow
-
-// Index Cards
-.plot: .orange
-.subplot: .pink
-.theme: .indigo
-.idea: .cyan
-```
-
-## Typography
-
-### Font System
-```swift
-// Design: .rounded for friendly feel
-.system(size: X, weight: .semibold, design: .rounded)
-
-// Sizes
-Title: 15pt
-Body: 14pt
-Caption: 13pt
-Small: 11pt
-
-// Weights
-.semibold  // Headers, emphasis
-.regular   // Body text
-.medium    // Icons
-
-// Writer-specific
-Editor: 11-24pt (user adjustable)
-Line Numbers: 11pt monospaced
-Status Bar: 12pt regular
-```
-
-### Platform Typography
-```swift
-// macOS
-ToolbarStyle.macOS:
-  glyphSize: 16pt
-  buttonSize: 36x32pt
-  weight: .regular
-
-// iOS
-ToolbarStyle.iOS:
-  glyphSize: 18pt
-  buttonSize: 36x36pt
-  weight: .regular
+// Panel Backgrounds
+Inspector: .regularMaterial
+Formatter: .regularMaterial
+Paper: Color(white: 0.98)
 ```
 
 ## Glass-Morphism Components
 
-### GlassButtonStyle
+### GlassButtonStyle (Unchanged)
+
 ```swift
-// Unified button appearance
-.ultraThinMaterial background
-cornerRadius: 10pt (continuous)
-border: Color.primary.opacity(0.08)
-padding: 12pt horizontal, 8pt vertical
-font: 14pt semibold rounded
-
-// Interaction
-scaleEffect: 0.97 when pressed
-animation: easeOut 0.08s
-```
-
-### Toolbar Container
-```swift
-// Consistent toolbar styling
-.ultraThinMaterial background
-cornerRadius: 14pt (continuous)
-border: Color.primary.opacity(0.08), 1pt
-shadow: radius 10pt, y: 4pt
-padding: 10pt internal
-margin: 12pt horizontal, 12pt top
-```
-
-### Floating Panel
-```swift
-FloatingPanelStyle:
-  cornerRadius: 16pt (continuous)
-  material: .regularMaterial
-  shadow: black 0.15, radius 20pt, y: 8pt
-  padding: 20pt margins
-```
-
-## Writer Visual System
-
-### Editor States
-```swift
-// Background
-.regularMaterial for editor area
-Line highlight: .primary.opacity(0.05)
-
-// Line Numbers
-Color: .secondary
-Font: .system(.caption, design: .monospaced)
-Padding: 8pt from text
-```
-
-### Status Bar
-```swift
-Height: 24pt
+// Consistent across all buttons
 Background: .ultraThinMaterial
-Border: top 1pt, .primary.opacity(0.08)
-Font: 12pt regular
-Spacing: 16pt between items
+CornerRadius: 10pt (continuous)
+Border: Color.primary.opacity(0.08)
+ScaleEffect: 0.97 when pressed
+Animation: .easeOut(duration: 0.08)
 ```
 
-### Font Size Controls
+### Floating Panel Style
+
 ```swift
-Range: 11-24pt
-Increment: 1pt
-Buttons: +/- with .secondary color
-Display: Current size badge
-```
-
-## Character Sheet Visual
-
-### Layout Modes
-```swift
-// Wide (>700pt)
-Side-by-side sections
-Fixed 350pt sidebar
-
-// Narrow (≤700pt)
-Tab-based navigation
-Full-width sections
-```
-
-### Form Styling
-```swift
-TextField:
-  .textFieldStyle(.roundedBorder)
-  padding: 8pt
-  
-TextEditor:
-  .background(Color.secondary.opacity(0.05))
-  .cornerRadius(8)
-  minHeight: 100pt
-```
-
-## Index Card Visual
-
-### Card Layout
-```swift
-minWidth: 220pt
-idealWidth: 250pt
-height: 350pt
-padding: 16pt
-cornerRadius: 12pt
-background: .regularMaterial
-shadow: radius 8pt, y: 4pt
-```
-
-### Grid System
-```swift
-columns: floor(width / minWidth)
-spacing: 20pt
-animation: .spring() on resize
-```
-
-### Card States
-```swift
-Normal: scale(1.0), shadow(8pt)
-Hover: scale(1.02), shadow(12pt)
-Selected: border(2pt, .accentColor)
-```
-
-## Spacing System
-
-### Consistent Spacing Scale
-```swift
-4pt   - Compact inline
-6pt   - Row vertical padding
-8pt   - Standard inline spacing
-10pt  - Header vertical padding
-12pt  - Row horizontal padding
-14pt  - Internal padding
-16pt  - Standard content padding
-20pt  - Panel margins
-```
-
-### Platform Spacing
-```swift
-// macOS
-Inspector width: 320pt
-Tighter spacing for density
-
-// iOS
-Inspector width: 280pt
-Larger touch targets
-More generous spacing
+// Inspector and Formatter Panels
+func floatingPanelStyle() -> some View {
+    self
+        .background(.regularMaterial)
+        .cornerRadius(16, style: .continuous)
+        .shadow(color: .black.opacity(0.15), 
+                radius: 20, y: 8)
+}
 ```
 
 ## Animation System
 
-### Spring Presets
+### Spring Animations (Consistent)
+
 ```swift
-// Panel transitions
+// Panel toggles (Inspector/Formatter)
 .spring(response: 0.35, dampingFraction: 0.85)
 
-// Card interactions
-.spring(response: 0.3, dampingFraction: 0.8)
+// Mode switching (Writer/Reader)
+.spring(response: 0.3, dampingFraction: 0.85)
 
-// Quick feedback
-.spring(response: 0.2, dampingFraction: 0.9)
-
-// Divider dragging
-.interactiveSpring(response: 0.15, dampingFraction: 1)
-
-// Button press
-.easeOut(duration: 0.08)
+// Save button feedback
+.scaleEffect(saving ? 0.97 : 1.0)
+.animation(.easeOut(duration: 0.08))
 ```
 
-### Animation Triggers
-- Panel switching
-- Inspector toggle
-- Card selection/hover
-- Button presses
-- Font size changes
-- Save indicator
+## Spacing System
+
+### Updated Layout
+
+```swift
+// Panel Configuration
+Inspector Width: 320pt (macOS), 280pt (iOS)
+Formatter Width: 320pt (macOS), 280pt (iOS)
+Panel Spacing: 16pt between panels
+Content Padding: 20pt
+
+// Toolbar/Statusbar
+Toolbar Height: 52pt
+Statusbar Height: 30pt
+Overlay Margins: 8pt
+```
 
 ## Material Hierarchy
 
-### Z-Layers (Back to Front)
+### Z-Layers (Updated)
+
 ```
-1. Application gradient background
-2. Main content area
-3. Editor/text areas
-4. Index cards
-5. Floating panels (.regularMaterial)
-6. Toolbars (.ultraThinMaterial)
-7. Popovers/Sheets
-8. Context menus
+1. Canvas background (AppBackground)
+2. Paper document (Writer mode only)
+3. Side panels (Inspector/Formatter)
+4. Toolbar (top overlay)
+5. Statusbar (bottom overlay)
+6. Sheets and dialogs
+7. Context menus
 ```
 
 ### Material Usage
+
 ```swift
 .ultraThinMaterial:
-  - Toolbars
+  - ProjectToolbar
+  - ProjectStatusbar
   - Buttons
-  - Status bars
-  - Labels
 
 .regularMaterial:
-  - Floating panels
-  - Inspector
-  - Main content areas
-  - Index cards
+  - Inspector panel
+  - Formatter panel
+  - Dialogs
 
-.thinMaterial:
-  - Dividers
-  - Subtle overlays
+Paper (custom):
+  - WriterWindow document area
+  - Light appearance forced
 ```
 
-## Icon System
+## Icon System Updates
 
-### SF Symbols Configuration
+### Navigation Icons
+
 ```swift
-// Rendering
-.symbolRenderingMode(.hierarchical)
+// Simplified to 2 modes
+Writer: "doc" (document icon)
+Reader: "book" (book icon)
 
-// Scaling
-.imageScale(.medium)
+// Panel Controls
+Inspector: "sidebar.left" / "sidebar.right"
+Formatter: "sidebar.left" / "sidebar.right"
 
-// Weight
-.font(.system(size: X, weight: .regular))
-```
-
-### Icon Categories
-```swift
-// Navigation
-square.and.pencil, person.crop.square, square.grid.3x3
-
-// Writing Tools
-textformat.size, number, doc.text.fill
-
-// Actions
-checkmark, xmark, trash, arrow.clockwise
-
-// File Types
-doc.text.fill, folder.fill
+// Save States
+Clean: "opticaldiscdrive"
+Dirty: "opticaldiscdrive.fill"
+Saving: Animation on icon
 ```
 
 ## Platform Adaptations
 
 ### macOS Specific
+
 ```swift
-- Hover states on all interactive elements
-- Cursor changes (text, resize)
-- Delete on hover
-- Tighter spacing
-- 320pt inspector
-- Keyboard shortcuts prominent
+- Native save panel (NSSavePanel)
+- "Open in Finder" in file browser
+- Keyboard shortcut badges
+- Hover states on buttons
+- 320pt panel widths
+- Cmd+S save shortcut
 ```
 
-### iOS Specific
+### iOS/iPadOS Specific
+
 ```swift
+- Document directory saving
+- Touch-optimized controls (44pt min)
+- Glass button style
+- 280pt panel widths
 - No hover states
-- Touch-optimized targets (44pt minimum)
-- Glass button style for menus
-- Haptic feedback ready
-- 280pt inspector
 - Gesture-based interactions
 ```
 
-### tvOS Specific
+## Visual State Indicators
+
+### Save States
+
 ```swift
-- Focus engine support
-- Larger UI elements
-- Simplified interactions
-- 1920x1080 layout
+// Save Button Visual Feedback
+Unsaved: Filled icon + accent color
+Saved: Outline icon + secondary color
+Saving: Pulsing animation
+
+// Statusbar Save Display
+"Saving..." - When actively saving
+"Saved just now" - < 1 minute
+"Saved X min ago" - Relative time
 ```
 
-## Visual Consistency Rules
+### Mode Indicators
 
-### Corner Radii
 ```swift
-16pt - Panels (continuous)
-14pt - Toolbars (continuous)
-12pt - Index cards (continuous)
-10pt - Buttons (continuous)
-8pt  - Text fields (continuous)
-6pt  - Small elements (continuous)
+// Toolbar Center Buttons
+Selected: .blue foreground
+Unselected: .secondary foreground
+Transition: Spring animation
 ```
 
-### Opacity Values
-```swift
-0.9  - Hover states
-0.85 - Normal dark mode
-0.8  - Normal light mode
-0.3  - Glass overlay
-0.15 - Selection highlight
-0.08 - Borders
-0.05 - Subtle backgrounds
-```
+## Removed Visual Elements
 
-### Shadow Configuration
-```swift
-// Standard shadows
-Panels:  20pt radius, 0.15 opacity, 8pt Y
-Cards:   8pt radius, 0.12 opacity, 4pt Y
-Buttons: 4pt radius, 0.15 opacity, 2pt Y
+### Deprecated Components
+- ~~WriterToolbar design~~ (merged into ProjectToolbar)
+- ~~Node-based mapper visuals~~ (moved to StoryMapper)
+- ~~4-panel navigation~~ (simplified to 2 modes)
+- ~~Multiple file browser designs~~ (unified)
 
-// No shadows on
-Borders, dividers, inline elements
-```
+## Quality Standards
 
-## Responsive Behavior
+### Current Achievements ✅
+- Consistent paper document metaphor
+- Unified toolbar design
+- Complete save state visuals
+- Smooth panel animations
+- Clear visual hierarchy
+- Platform-appropriate styling
 
-### Adaptive Layouts
-```swift
-// Index cards
-minWidth: 220pt
-columns: floor(width / minWidth)
-spacing: 20pt
+### Areas for Enhancement 🎯
+- MarkdownUI theme integration
+- Loading state animations
+- Export progress indicators
+- Undo/redo visual feedback
+- Find/replace overlay design
 
-// Inspector
-Draggable divider
-minSectionHeight: 100pt
-50/50 default split
+## Performance Considerations
 
-// Writer
-Font size: 11-24pt adaptive
-Line numbers: toggle visibility
-```
+### Visual Optimizations
+- Paper shadow cached
+- Minimal material layers
+- Efficient state updates
+- GPU-accelerated animations
+- Lazy panel rendering
 
-### Breakpoints
-```swift
-// Character sheet
-width > 700pt: Side-by-side
-width ≤ 700pt: Tabs
-
-// General panels
-Maintain fixed widths
-Content adapts internally
-```
+### Metrics
+- 60fps animations maintained
+- < 16ms render time
+- Smooth panel transitions
+- No shadow flickering
+- Fast text rendering
 
 ## Accessibility
 
 ### Implemented
-- Semantic colors for color scheme adaptation
-- `.help()` tooltips on buttons
-- Standard SwiftUI accessibility
-- Sufficient contrast ratios
-- Adjustable font sizes (11-24pt)
+- Adjustable font sizes (11-28pt range)
+- High contrast borders (0.08 opacity)
+- Semantic color usage
+- Platform color adaptation
+- Sufficient touch targets
 
 ### Planned
 - Dynamic Type support
-- Reduced motion alternatives
-- High contrast mode
+- Reduced motion mode
+- High contrast theme
+- Enhanced focus indicators
 - VoiceOver optimization
-- Keyboard navigation complete
 
-## Design Tokens
+## Design Token Updates
 
 ### Reusable Styles
 ```swift
-GlassButtonStyle()       // All buttons
-FloatingPanelStyle()     // All panels
-ToolbarStyle.platform    // All toolbars
+GlassButtonStyle()        // All buttons
+floatingPanelStyle()      // Side panels
+paperDocumentStyle()      // Writer document
+ToolbarStyle.platform     // Platform variants
 ```
 
 ### Consistent Patterns
-- All interactive elements scale on press
-- All panels use continuous corners
-- All materials have subtle borders
-- All animations use spring timing
+- Paper metaphor for content
+- Glass morphism for UI
+- Spring animations throughout
+- Continuous corner radii
+- State-based visual feedback
 
-## Quality Standards
+## Success Metrics
 
-### Visual Polish
-✅ Consistent glass-morphism
-✅ Smooth animations
-✅ Platform-appropriate styling
-✅ State-based feedback
-✅ Modern aesthetic
+### Visual System (85% Complete)
+- ✅ Paper document metaphor
+- ✅ Unified toolbar design
+- ✅ Statusbar implementation
+- ✅ Panel animations
+- ✅ Save state indicators
+- ✅ Mode switching visuals
+- ❌ MarkdownUI styling
+- ❌ Export UI design
 
-### Areas for Enhancement
-- Loading states
-- Empty states
-- Error states
-- Success feedback
-- Skeleton screens
-- Save indicators
-
-## Performance Considerations
-
-### Optimizations
-- Minimal shadow layers
-- Efficient material usage
-- Cached gradients
-- Lazy view rendering
-
-### Visual Performance
-- 60fps animations
-- < 16ms render time
-- Smooth state transitions
-- No visual glitches
-- Fast text rendering
+The visual system successfully creates a clear hierarchy between writing content (paper) and interface controls (glass), with smooth animations and consistent styling throughout.

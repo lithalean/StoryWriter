@@ -13,8 +13,11 @@ lithalean@Mac StoryWriter % tree
 │   │   ├── ContentView.swift
 │   │   ├── Item.swift
 │   │   └── StoryWriterApp.swift
-│   ├── Core
+│   ├── Canvas
 │   │   ├── CanvasBackground.swift
+│   │   ├── CanvasGestureHandler.swift
+│   │   └── CanvasState.swift
+│   ├── Core
 │   │   ├── FileBrowser.swift
 │   │   ├── FileSystemModel.swift
 │   │   ├── MarkdownReader.swift
@@ -198,6 +201,7 @@ lithalean@Mac StoryWriter % tree
 │   │       └── IndexWindow.swift
 │   └── Writer
 │       ├── WriterDocument.swift
+│       ├── WriterPaper.swift
 │       ├── WriterState.swift
 │       └── WriterWindow.swift
 └── StoryWriter.xcodeproj
@@ -216,5 +220,5 @@ lithalean@Mac StoryWriter % tree
             └── xcschemes
                 └── xcschememanagement.plist
 
-47 directories, 168 files
+48 directories, 171 files
 lithalean@Mac StoryWriter % 

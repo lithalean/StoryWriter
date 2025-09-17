@@ -1,407 +1,356 @@
-# StoryWriter Navigation & User Flows
+# StoryWriter Navigation & Layout System
 
-**Version**: 3.0.0  
-**Architecture**: Single-window with mode switching  
-**Pattern**: Behavior-contract navigation  
+**Version**: 3.1.0  
+**Architecture**: Single-window with precision layout  
+**Pattern**: Behavior-contract navigation with calculated positioning  
 **Platform Support**: macOS, iOS, tvOS  
-**Last Updated**: September 2025
+**Last Updated**: October 2025
 
-## Navigation Architecture
+## Layout Architecture
 
-### Simplified Two-Mode Design
+### Precision Layout System
 
-StoryWriter uses a **single-window architecture** with two primary modes and toggleable panels:
+StoryWriter uses a sophisticated layout calculation system to ensure perfect alignment of all UI elements. The system accounts for toolbar height, statusbar height, padding requirements, and fine-tuning offsets.
 
 ```
-StoryWriterApp
-    ↓
-ContentView (Router)
-    ├── ProjectToolbar (Unified controls)
-    ├── Inspector Panel (Left sidebar - toggleable)
-    ├── Main Content (Mode-based)
-    │   ├── WriterWindow
-    │   └── ReaderWindow
-    ├── Formatter Panel (Right sidebar - toggleable)
-    └── ProjectStatusbar (Bottom overlay)
+Layout Constants (from ContentView.swift):
+├── toolbarHeight: 52pt
+├── statusbarHeight: 36pt  
+├── topToolbarPadding: 8pt
+├── bottomStatusbarPadding: 8pt
+└── floatingPanelYOffset: 6pt  // Fine-tuning offset
 ```
 
-## Navigation Control
+## Critical Layout Calculations
 
-### Primary Navigation - ProjectToolbar
+### Available Height Calculation
 
-Unified toolbar with all primary controls:
+The available height for content is calculated by subtracting all UI chrome from the total window height:
 
 ```swift
-ProjectToolbarConfig:
-  // Mode switching (center)
-  selectedSection: () -> ProjectState
-  selectSection: (ProjectState) -> Void
-  
-  // Panel toggles (left/right)
-  isInspectorVisible: () -> Bool
-  toggleSidebar: () -> Void
-  isRightPanelVisible: () -> Bool
-  toggleRightPanel: () -> Void
-  
-  // Save functionality (right)
-  isDirty: () -> Bool
-  save: () -> Void
-  canSave: () -> Bool
+let availableHeight = geometry.size.height 
+    - toolbarHeight           // 52pt
+    - statusbarHeight         // 36pt
+    - topToolbarPadding      // 8pt
+    - bottomStatusbarPadding  // 8pt
 ```
 
-**Modes (2 states):**
+This ensures content never overlaps with the toolbar or statusbar.
+
+### Window Y-Offset Calculation
+
+The main content window needs vertical centering between toolbar and statusbar:
+
 ```swift
-enum ProjectState {
-  case writer  // Document editing (doc icon)
-  case reader  // Reading view (book icon)
+let windowYOffset = ((toolbarHeight + topToolbarPadding) - (statusbarHeight + bottomStatusbarPadding)) / 2 
+    + floatingPanelYOffset
+
+// Breaking this down:
+// 1. Top space = toolbarHeight (52) + topPadding (8) = 60pt
+// 2. Bottom space = statusbarHeight (36) + bottomPadding (8) = 44pt  
+// 3. Difference = 60 - 44 = 16pt
+// 4. Center offset = 16 / 2 = 8pt
+// 5. Final offset = 8 + floatingPanelYOffset (6) = 14pt
+```
+
+The `floatingPanelYOffset` of 6pt is a fine-tuning value that slightly lowers panels for better visual balance.
+
+### Panel Height Calculation
+
+Side panels (Inspector and Formatter) have their own height calculation:
+
+```swift
+let availableHeight = geometry.size.height 
+    - toolbarHeight     // 52pt
+    - statusbarHeight   // 36pt
+    - 8                 // Top padding
+    - 8                 // Bottom padding
+```
+
+Panels are then positioned with:
+- `.padding(.top, toolbarHeight)` - Ensures they start below toolbar
+- `.padding(.bottom, statusbarHeight)` - Ensures they end above statusbar
+- `.offset(y: calculatedOffset)` - Applies the same Y-offset as main content
+
+## Layout Stack Structure
+
+### Z-Layer Organization
+
+```
+ZStack {
+    // Layer 0: Background
+    AppBackground()
+        .ignoresSafeArea()
+    
+    // Layer 1: Main Content Area
+    GeometryReader { geometry in
+        Group {
+            // Writer or Reader window
+        }
+        .floatingPanelStyle()
+        .frame(maxHeight: availableHeight)
+        .offset(y: windowYOffset)  // 14pt down
+    }
+    
+    // Layer 2: Side Panels
+    GeometryReader { geometry in
+        if showInspector { /* Left panel */ }
+        if showFormatter { /* Right panel */ }
+    }
+    
+    // Layer 3: Chrome Overlay
+    VStack {
+        ProjectToolbar()
+            .padding(.top, 8)     // topToolbarPadding
+        Spacer()
+        ProjectStatusbar()
+            .padding(.bottom, 8)  // bottomStatusbarPadding
+    }
 }
 ```
 
-## User Flows
+## Panel Positioning Logic
 
-### 1. Writing Flow (Primary)
+### Inspector Panel (Left)
 
-```
-User clicks doc icon or starts in Writer mode
-    → ContentView.currentSection = .writer
-    → WriterWindow displays with paper document
-        → TextEditor (temporary, MarkdownUI ready)
-        → Auto-save timer (2 seconds)
-        → Save via toolbar button or Cmd+S
-    → FormatterPanel available (right toggle)
-        → Font size controls
-        → Bold/Italic/Underline
-        → Text alignment
-        → Line numbers toggle
-
-Capabilities:
-✅ Full text editing
-✅ Complete save system (auto + manual)
-✅ Font formatting controls
-✅ Line numbers display
-✅ Word/character counting
-✅ Paper document design
-⏳ Markdown rendering (97 files ready)
-❌ Undo/Redo system
+```swift
+HStack {
+    InspectorPanel()
+        .floatingPanelStyle()
+        .frame(width: 280)
+        .frame(maxHeight: availableHeight)
+        .padding(.leading, 20)
+        .padding(.top, toolbarHeight)      // 52pt
+        .padding(.bottom, statusbarHeight) // 36pt
+    Spacer()
+}
+.offset(y: windowYOffset)  // 14pt vertical offset
 ```
 
-### 2. Reading Flow
+### Formatter Panel (Right)
 
-```
-User clicks book icon
-    → ContentView.currentSection = .reader
-    → ReaderWindow displays
-        → Serif typography (18pt default)
-        → Larger font range (12-28pt)
-        → Read-only view
-        → Canvas background
-
-Capabilities:
-✅ Mode switching works
-✅ Font size adjustment
-✅ Optimized typography
-⏳ Markdown rendering (ready to integrate)
-❌ Pagination
-❌ Export options
+```swift
+HStack {
+    Spacer()
+    FormatterPanel()
+        .floatingPanelStyle()
+        .frame(width: 280)
+        .frame(maxHeight: availableHeight)
+        .padding(.trailing, 20)
+        .padding(.top, toolbarHeight)      // 52pt
+        .padding(.bottom, statusbarHeight) // 36pt
+}
+.offset(y: windowYOffset)  // 14pt vertical offset
 ```
 
-### 3. Save Flow (Complete)
+### Main Content Window
 
-```
-Document edited
-    → isDirty = true
-    → Save button shows filled icon
-    → User clicks save or presses Cmd+S
-        → Native save dialog (first time)
-        → Direct save (existing file)
-    → Auto-save after 2 seconds of inactivity
-    → Statusbar shows "Saved just now"
-
-Save States:
-✅ Manual save via button
-✅ Keyboard shortcut (Cmd+S)
-✅ Auto-save timer
-✅ Save As functionality
-✅ Dirty state tracking
+```swift
+Group {
+    switch currentSection {
+    case .writer: WriterWindow()
+    case .reader: ReaderWindow()
+    }
+}
+.floatingPanelStyle()
+.padding(.vertical, 20)
+.padding(.horizontal, 20)
+.frame(maxHeight: availableHeight)
+.offset(y: windowYOffset)  // 14pt vertical offset
 ```
 
-### 4. Inspector/File Browser Flow
+## Spacing and Padding System
 
+### Content Padding
+- **Horizontal**: 20pt on all sides for main content and panels
+- **Vertical**: 20pt for content windows
+
+### Chrome Padding
+- **Toolbar**: 8pt top padding
+- **Statusbar**: 8pt bottom padding
+- **Toolbar horizontal**: Full width minus horizontal padding
+
+### Panel Spacing
+- **Width**: 280pt (iOS/tvOS), 320pt (macOS)
+- **Gap from edge**: 20pt
+- **Gap from content**: Implicit through layout
+
+## Animation System
+
+### Panel Toggle Animations
+
+All panel toggles use consistent spring animations:
+
+```swift
+.animation(.spring(response: 0.35, dampingFraction: 0.85), value: showInspector)
+.animation(.spring(response: 0.35, dampingFraction: 0.85), value: showFormatter)
 ```
-User toggles left sidebar
-    → showInspector = true/false
-    → InspectorPanel displays
-        → FileBrowser (single implementation)
-        → Three folders:
-            - Manuscript
-            - Characters  
-            - Locations
-        → "Open in Finder" on macOS
 
-Capabilities:
-✅ Browse file structure
-✅ Visual hierarchy
-✅ Open in Finder
-❌ Open files in editor
-❌ Create/Delete (removed for simplicity)
-```
+### Mode Switching Animation
 
-### 5. Formatter Panel Flow
+Content mode transitions use faster springs:
 
-```
-User toggles right sidebar
-    → showFormatter = true/false
-    → FormatterPanel displays
-        → Font size slider
-        → Text formatting buttons
-        → Alignment controls
-        → Line numbers toggle
-
-Capabilities:
-✅ All controls functional
-✅ Real-time updates
-✅ Settings persistence
+```swift
+withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+    currentSection = section
+}
 ```
 
 ## State Management
 
-### Global State (ContentView)
+### Panel State Variables
 
 ```swift
-// Navigation
-@State currentSection: ProjectState = .writer
-@State showInspector = true
-@State showFormatter = false
-
-// Document
-@StateObject document = WriterDocument()
-@StateObject projectManager = ProjectManager()
-
-// Statusbar preferences (persisted)
-@AppStorage("statusBar.showCharCount") showCharCount = false
-@AppStorage("statusBar.showEditingMode") showEditingMode = true
-@AppStorage("statusBar.showSection") showSection = true
+@State private var showInspector = true
+@State private var showFormatter = false
+@State private var currentSection: ProjectState = .writer
 ```
 
-### Mode-Specific State
+### Toggle Actions
 
-**WriterWindow:**
+Inspector toggle:
 ```swift
-@StateObject state = WriterState()      // View preferences
-@StateObject document = WriterDocument() // Document with save
+toggleSidebar: {
+    withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+        showInspector.toggle()
+    }
+}
 ```
 
-**ReaderWindow:**
+Formatter toggle:
 ```swift
-@StateObject state = ReaderState()      // Reading preferences
-// Future: shares document with Writer
+toggleRightPanel: {
+    withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+        showFormatter.toggle()
+    }
+}
 ```
 
-## Panel Layout System
+## Visual Alignment Verification
 
-### Three-Panel Architecture
+### Toolbar-Content Alignment
+- Toolbar bottom edge: `8 + 52 = 60pt` from top
+- Content top with offset: `20 + 14 = 34pt` from top
+- Visual gap: `60 - 34 = 26pt`
 
-```
-┌─────────┬──────────────────┬──────────┐
-│Inspector│   Main Content   │Formatter │
-│ (Left)  │  (Writer/Reader) │ (Right)  │
-├─────────┴──────────────────┴──────────┤
-│           Status Bar                   │
-└────────────────────────────────────────┘
-```
+### Content-Statusbar Alignment
+- Content bottom: `windowHeight - (20 + availableHeight + 14)`
+- Statusbar top: `windowHeight - (8 + 36)`
+- Ensures no overlap with proper spacing
 
-### Panel States
-- **Both panels**: Inspector + Content + Formatter
-- **Left only**: Inspector + Content
-- **Right only**: Content + Formatter  
-- **Neither**: Content only (maximized)
+### Panel Alignment
+- Panels start at: `toolbarHeight (52pt)` from top
+- Panels end at: `statusbarHeight (36pt)` from bottom
+- Y-offset ensures vertical centering: `14pt`
 
-## Animation System
-
-### Consistent Spring Animations
-
-```swift
-// Panel toggles
-.spring(response: 0.35, dampingFraction: 0.85)
-
-// Mode transitions
-.spring(response: 0.3, dampingFraction: 0.85)
-
-// Save button feedback
-.scaleEffect(pressed ? 0.97 : 1.0)
-```
-
-## Platform Adaptations
+## Platform-Specific Adjustments
 
 ### macOS
-- Native save panels (NSSavePanel)
-- Keyboard shortcuts (Cmd+S)
-- "Open in Finder" support
-- Hover states
-- 52pt toolbar height
+- Panel width: 320pt (inspector and formatter)
+- Window minimum size constraints apply
+- Native scrolling behavior
 
 ### iOS/iPadOS
-- Document directory saving
-- Touch-optimized controls
-- Glass button styling
-- Sheet presentations
-- Adaptive layouts
+- Panel width: 280pt
+- Touch-safe margins
+- Safe area considerations
 
 ### tvOS
-- Simplified interactions
-- Focus engine support
 - Fixed 1920x1080 layout
-- Remote control optimized
+- Focus-safe zones
+- Panel width: 280pt
 
-## Data Flow
+## Responsive Behavior
 
-### Behavior-Contract Navigation
+### Window Resize Handling
 
-All navigation through closures:
+The GeometryReader recalculates on window resize:
+1. New `availableHeight` computed
+2. Window and panels adjust their `maxHeight`
+3. Y-offset remains constant (14pt)
+4. Panels maintain fixed width
 
-```swift
-// Toolbar receives behaviors only
-ProjectToolbar(config: ProjectToolbarConfig(
-    selectedSection: { currentSection },
-    selectSection: { section in
-        currentSection = section
-    },
-    save: { document.save() },
-    isDirty: { document.isDirty }
-))
+### Panel Toggle Impact
+- Main content maintains position
+- No reflow of central content
+- Smooth spring animations
+- Fixed chrome positions
 
-// Statusbar receives data through closures
-ProjectStatusbar(config: ProjectStatusbarConfig(
-    wordCount: { document.wordCount },
-    lastSaved: { document.lastSaved }
-))
+## Layout Debugging
+
+### Visual Verification Points
+
+To verify correct layout:
+1. **Toolbar clearance**: Content should have visible gap below toolbar
+2. **Statusbar clearance**: Content should end above statusbar
+3. **Panel alignment**: Panels should align with content vertically
+4. **Offset consistency**: All elements at same Y-offset (14pt)
+
+### Common Issues and Solutions
+
+**Problem**: Content overlaps toolbar
+**Solution**: Verify `availableHeight` calculation includes all padding
+
+**Problem**: Panels appear misaligned
+**Solution**: Ensure same `windowYOffset` applied to all elements
+
+**Problem**: Bottom content cut off
+**Solution**: Check statusbar height and bottom padding in calculations
+
+## Mathematical Precision
+
+### Key Formula
+
+```
+Final Y-Offset = ((ToolbarSpace - StatusbarSpace) / 2) + FineTuning
+
+Where:
+- ToolbarSpace = toolbarHeight + topPadding
+- StatusbarSpace = statusbarHeight + bottomPadding  
+- FineTuning = floatingPanelYOffset (6pt)
 ```
 
-### Document Flow
+### Validation
+- Total chrome height: 52 + 36 + 8 + 8 = 104pt
+- Available content: windowHeight - 104pt
+- Vertical centering offset: 14pt
+- Ensures balanced visual weight
 
-```
-WriterDocument (source)
-    ↓ @Published
-ContentView (coordinator)
-    ↓ Closures
-Toolbar/Statusbar (display)
-```
+## Performance Considerations
 
-## Accessibility
+### Layout Calculations
+- Performed once per window resize
+- Cached in local constants
+- No repeated calculations in render
 
-### Implemented
-- `.help()` tooltips on all buttons
-- Semantic button labels
-- Adjustable font sizes (11-28pt range)
-- High contrast borders
-- Standard SwiftUI accessibility
-
-### Missing
-- Complete VoiceOver optimization
-- Full keyboard navigation
-- Custom accessibility actions
-- Reading progress announcements
-
-## Performance
-
-### Current Metrics
-- Mode switch: < 50ms
-- Panel toggle: ~350ms animated
-- Save operation: < 100ms typical
-- Auto-save delay: 2000ms
-- Text editing: Native performance
-
-### Optimizations
+### Animation Performance
 - Spring animations GPU-accelerated
-- Lazy panel loading
-- Efficient state updates
-- Minimal redraws
-
-## Working Features
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Mode switching | ✅ | Writer/Reader toggle |
-| Save system | ✅ | Complete with auto-save |
-| Panel toggles | ✅ | Inspector/Formatter |
-| Statusbar | ✅ | Full info display |
-| File browsing | ✅ | Single implementation |
-| Text editing | ✅ | With formatting controls |
-| Keyboard shortcuts | ✅ | Cmd+S implemented |
-
-## Missing Features
-
-| Feature | Priority | Implementation |
-|---------|----------|----------------|
-| MarkdownUI | Critical | 97 files ready |
-| Undo/Redo | High | Not started |
-| File opening | Medium | Browser disconnected |
-| Character data | Medium | UI only |
-| Export | Medium | Not started |
-| Find/Replace | Low | Not designed |
-| Templates | Low | Not planned |
-
-## Navigation Patterns
-
-### Current Implementation
-- **Two-Mode System**: Writer and Reader
-- **Unified Toolbar**: All controls in one place
-- **Behavior-Contract**: Navigation via closures
-- **Panel Independence**: Each panel self-contained
-
-### Removed Complexity
-- ~~WriterToolbar~~: Merged into ProjectToolbar
-- ~~4-Panel System~~: Simplified to 2 modes
-- ~~Multiple File Browsers~~: Single implementation
-- ~~Character/Index Navigation~~: Shelved for now
-
-## Known Issues
-
-1. **File Opening**: Browser can't open files in editor
-2. **Section Title**: Hardcoded as "Untitled Section"
-3. **No Undo/Redo**: Critical for editing
-4. **No Templates**: New documents start blank
+- Fixed durations (0.35s panels, 0.3s mode)
+- No layout thrashing
 
 ## Best Practices
 
 ### DO
-- Use behavior-contract for all navigation
-- Maintain mode isolation
-- Apply consistent animations
-- Test platform differences
-- Keep toolbar unified
+- Use the calculated `availableHeight` for all content
+- Apply consistent `windowYOffset` to aligned elements
+- Maintain padding constants in single location
+- Test with various window sizes
 
 ### DON'T
-- Add state to navigation components
-- Create navigation dependencies
-- Skip animations
-- Mix navigation patterns
-- Split toolbar functionality
+- Hard-code positions without calculations
+- Skip the Y-offset for aligned elements
+- Use different animation timings
+- Ignore platform-specific panel widths
 
-## Migration from Previous Version
+## Testing Checklist
 
-### What Changed
-- **Toolbar**: WriterToolbar removed, all in ProjectToolbar
-- **Navigation**: 4 panels reduced to 2 modes
-- **Save**: Now complete with button and auto-save
-- **File Browser**: 3 implementations reduced to 1
-- **Statusbar**: Added for information display
+- [ ] Toolbar has 8pt top padding
+- [ ] Statusbar has 8pt bottom padding  
+- [ ] Content respects availableHeight
+- [ ] All elements use 14pt Y-offset
+- [ ] Panels align with main content
+- [ ] No overlap between layers
+- [ ] Animations smooth at 60fps
+- [ ] Resize maintains alignment
 
-### What Stayed
-- Behavior-contract pattern
-- Single-window architecture
-- Panel toggle system
-- Spring animations
-- Platform adaptations
-
-## Success Metrics
-
-### Navigation System (90% Complete)
-- ✅ Mode switching smooth
-- ✅ Panel toggles working
-- ✅ Save integration complete
-- ✅ Statusbar functional
-- ✅ Keyboard shortcuts
-- ❌ Undo/Redo navigation
-
-The navigation system has been significantly simplified and improved, with a focus on the core writing experience and clean mode separation.
+The precision layout system ensures pixel-perfect alignment across all UI elements while maintaining flexibility for different window sizes and platform requirements.
